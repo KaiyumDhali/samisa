@@ -31,42 +31,36 @@
 
     <table class="table table-bordered table-striped table-sm table-hover pt-3">
         @if ($employeeDetails)
-            <thead class="text-light bg-secondary ">
+                        <thead class="text-light bg-secondary ">
                 <tr class="text-uppercase">
                     <th scope="col">Code</th>
                     <th scope="col">Name</th>
-                    {{-- <th scope="col">Department</th>
-                    <th scope="col">Designation</th> --}}
                     <th scope="col">No of Late</th>
-                    <th scope="col">Late Leave</th>
+                    <th scope="col">Late Deduction</th>
                     <th scope="col">Casual</th>
-                    <th scope="col">Total Casual</th>
                     <th scope="col">Sick</th>
-                    {{-- <th scope="col">Annual</th>
-                    <th scope="col">Special</th> --}}
+                    <th scope="col">Annual</th>
+                    <th scope="col">Special</th>
                     <th scope="col">Leave Availed</th>
                     <th scope="col">Leave Balance</th>
                     <th scope="col">Total Leave</th>
                 </tr>
             </thead>
-            
+
             <tbody>
-                @foreach ($employeeDetails as $key => $employeeDetails)
+                @foreach ($employeeDetails as $emp)
                     <tr>
-                        <td>{{ $employeeDetails->employee_code }}</td>
-                        <td>{{ $employeeDetails->employee_name }}</td>
-                        {{-- <td>{{ $employeeDetails->department_name }}</td>
-                        <td>{{ $employeeDetails->designation_name }}</td> --}}
-                        <td>{{ $employeeDetails->NoOfLate }}</td>
-                        <td>{{ $employeeDetails->LateOfLeave }}</td>
-                        <td>{{ $employeeDetails->casual }}</td>
-                        <td>{{ $employeeDetails->TotalCasual }}</td>
-                        <td>{{ $employeeDetails->sick }}</td>
-                        {{-- <td>{{ $employeeDetails->annual }}</td>
-                        <td>{{ $employeeDetails->special }}</td> --}}
-                        <td>{{ $employeeDetails->LeaveAvailed }}</td>
-                        <td>{{ $employeeDetails->LeaveBalance }}</td>
-                        <td>{{ $employeeDetails->total_leave }}</td>
+                        <td>{{ $emp->employee_code }}</td>
+                        <td>{{ $emp->employee_name }}</td>
+                        <td>{{ $emp->NoOfLate }}</td>
+                        <td>{{ $emp->LateDeduction }}</td>
+                        <td>{{ $emp->casual }}</td>
+                        <td>{{ $emp->sick }}</td>
+                        <td>{{ $emp->annual }}</td>
+                        <td>{{ $emp->special }}</td>
+                        <td>{{ $emp->LeaveAvailed }}</td>
+                        <td>{{ $emp->LeaveBalance }}</td>
+                        <td>{{ $emp->total_leave }}</td>
                     </tr>
                 @endforeach
             </tbody>

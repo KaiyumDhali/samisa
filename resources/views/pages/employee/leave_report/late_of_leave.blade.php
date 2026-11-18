@@ -27,6 +27,74 @@
     <div id="kt_app_content" class="app-content flex-column-fluid">
         <!--begin::Content container-->
         <div id="kt_app_content_container" class="app-container ">
+
+            <!--begin::Late leave rule-->
+            <div class="card card-flush mb-5">
+                <div class="card-header py-4">
+                    <div class="card-title fs-6">
+                        Current rule:
+                        <span class="ms-2 badge badge-light-primary fs-7">
+                            {{ $policy->late_count }} late = {{ $policy->deduct_days }} day(s) {{ $policy->leave_type }}
+                            @if ($policy->fallback_leave_type)
+                                (fallback: {{ $policy->fallback_leave_type }})
+                            @endif
+                            {{ $policy->repeat_deduction ? '- repeat' : '- one time' }}
+                        </span>
+                    </div>
+                    <div class="card-toolbar">
+                        <button class="btn btn-sm btn-light-primary" type="button" data-bs-toggle="collapse"
+                            data-bs-target="#late_policy_form">Change rule</button>
+                    </div>
+                </div>
+                <div id="late_policy_form" class="collapse">
+                    <div class="card-body pt-0">
+                        <form method="POST" action="{{ route('late_leave_policy_save') }}">
+                            @csrf
+                            <div class="row g-4 align-items-end">
+                                <div class="col-md-2">
+                                    <label class="form-label fs-7">Late days</label>
+                                    <input type="number" min="1" max="31" name="late_count" class="form-control form-control-sm"
+                                        value="{{ $policy->late_count }}" required>
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label fs-7">Leave days to deduct</label>
+                                    <input type="number" min="1" max="31" name="deduct_days" class="form-control form-control-sm"
+                                        value="{{ $policy->deduct_days }}" required>
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label fs-7">Deduct from leave type</label>
+                                    <select name="leave_type" class="form-select form-select-sm">
+                                        @foreach (\App\Models\LateLeavePolicy::LEAVE_TYPES as $t)
+                                            <option value="{{ $t }}" {{ $policy->leave_type == $t ? 'selected' : '' }}>{{ $t }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label fs-7">If balance is insufficient (optional)</label>
+                                    <select name="fallback_leave_type" class="form-select form-select-sm">
+                                        <option value="">-- none --</option>
+                                        @foreach (\App\Models\LateLeavePolicy::LEAVE_TYPES as $t)
+                                            <option value="{{ $t }}" {{ $policy->fallback_leave_type == $t ? 'selected' : '' }}>{{ $t }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div class="col-md-2">
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" name="repeat_deduction" value="1" id="repeat_deduction"
+                                            {{ $policy->repeat_deduction ? 'checked' : '' }}>
+                                        <label class="form-check-label fs-7" for="repeat_deduction">Repeat (6 late = 2 days)</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-2">
+                                    <button type="submit" class="btn btn-sm btn-primary">Save rule</button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            <!--end::Late leave rule-->
+
             <!--begin::Products-->
             <div class="card card-flush">
                 <!--begin::Card header-->
@@ -50,27 +118,9 @@
                                 <div class="product fv-row fv-plugins-icon-container">
                                     <select class="form-select form-select-sm" data-control="select2" id="month" name="month">
                                         <option value="">Month</option>
-                                        <option value="january" {{ date('F') == 'January' ? 'selected' : '' }}>January
-                                        </option>
-                                        <option value="february" {{ date('F') == 'February' ? 'selected' : '' }}>
-                                            February</option>
-                                        <option value="march" {{ date('F') == 'March' ? 'selected' : '' }}>March
-                                        </option>
-                                        <option value="april" {{ date('F') == 'April' ? 'selected' : '' }}>April
-                                        </option>
-                                        <option value="may" {{ date('F') == 'May' ? 'selected' : '' }}>May</option>
-                                        <option value="june" {{ date('F') == 'June' ? 'selected' : '' }}>June</option>
-                                        <option value="july" {{ date('F') == 'July' ? 'selected' : '' }}>July</option>
-                                        <option value="august" {{ date('F') == 'August' ? 'selected' : '' }}>August
-                                        </option>
-                                        <option value="september" {{ date('F') == 'September' ? 'selected' : '' }}>
-                                            September</option>
-                                        <option value="october" {{ date('F') == 'October' ? 'selected' : '' }}>October
-                                        </option>
-                                        <option value="november" {{ date('F') == 'November' ? 'selected' : '' }}>
-                                            November</option>
-                                        <option value="december" {{ date('F') == 'December' ? 'selected' : '' }}>
-                                            December</option>
+                                        @foreach (['january', 'february', 'march', 'april', 'may', 'june', 'july', 'august', 'september', 'october', 'november', 'december'] as $m)
+                                            <option value="{{ $m }}" {{ strtolower(date('F')) == $m ? 'selected' : '' }}>{{ ucfirst($m) }}</option>
+                                        @endforeach
                                     </select>
                                 </div>
                             </div>
@@ -84,39 +134,31 @@
                             </div>
                         </div>
                     </div>
-                    {{-- <div class="card-toolbar flex-row-fluid justify-content-end gap-5">
-                        <a href="" id="downloadPdf" name="downloadPdf" type="button"
-                            class="btn btn-sm btn-light-primary" target="_blank">
-                            PDF Download
-                        </a>
-                        @can('create attendance')
-                        @endcan
-                    </div> --}}
-                </div>                
+                </div>
                 <div id="tableDiv" class="card-body pt-0">
                     <div id="messageContainer" class="alert my-5" style="display: none;"></div>
 
                     <form id="myForm">
-                        <button type="button" class="btn btn-sm btn-success px-5" onclick="submitSelectedRows()">Selected Approved</button>
+                        <button type="button" class="btn btn-sm btn-success px-5" onclick="submitSelectedRows()">Approve Selected</button>
 
                         <table class="table table-striped table-bordered align-middle table-row-dashed fs-7 gy-5 mb-0"
                             id="late_of_leave">
                             <thead>
                                 <tr class="text-start fs-7 text-uppercase gs-0">
                                     <th class="w-80px"><input type="checkbox" id="select-all-checkbox"></th>
-                                    {{-- <th class="w-60px">Sl</th> --}}
                                     <th class="w-60px">Code</th>
                                     <th class="min-w-150px">Name</th>
-                                    {{-- <th class="min-w-150px">Department</th>
-                                    <th class="min-w-150px">Designation</th> --}}
-                                    <th class="w-150px">Total Casual</th>
-                                    <th class="w-150px">Balance Casual</th>
-                                    <th class="w-150px">No of Late</th>
-                                    <th class="w-150px">Late of Leave</th>
+                                    <th class="min-w-150px">Status</th>
+                                    <th class="w-100px">No of Late</th>
+                                    <th class="w-100px">Leave Days</th>
+                                    <th class="w-100px">Deduct: Casual</th>
+                                    <th class="w-100px">Deduct: Sick</th>
+                                    <th class="w-100px">Deduct: Annual</th>
+                                    <th class="w-100px">Deduct: Special</th>
                                 </tr>
                             </thead>
                             <tbody class="fw-semibold text-gray-700" id="attendance_list">
-                                <!-- Your table data will be dynamically added here using JavaScript -->
+                                <!-- Table data is added dynamically using JavaScript -->
                             </tbody>
                         </table>
                     </form>
@@ -132,34 +174,67 @@
 <meta name="csrf-token" content="{{ csrf_token() }}">
 
 <script>
-    var year = $('#year').val();
-    var month = $('#month').val();
-
-    // var name = 'Shahjalal Equity Management Ltd.';
-    // name += `\n Leave Month of :  ${month} ${year}`;
-    // var reportTittle = name;
-
-    // Initialize DataTable
-    // var table = $('#late_of_leave').DataTable();
     var table = $('#late_of_leave').DataTable({
         pageLength: 100,
-        // other DataTable options and configurations can go here
     });
 
-    // Add event listener to the "Select All" checkbox
+    // "Select All" checkbox
     $('#select-all-checkbox').click(function() {
         $('.row-checkbox').prop('checked', this.checked);
     });
 
-    function validateNumberInput(input) {
-        // Remove any non-digit characters
-        input.value = input.value.replace(/[^0-9]/g, '');
-
-        // Ensure the input is a positive number
-        if (input.value < 0) {
-            input.value = '';
+    // Input box for one leave type, with its balance below
+        // Input box for one leave type, with the remaining balance below it
+    function dedInput(d, type) {
+        let src = {};
+        if (d.status === 'pending') {
+            (d.deductions || []).forEach(x => { src[x.type] = x.days; });
+        } else {
+            src = d.approved || {};
         }
+        let days = src[type] || 0;
+        // balance available before this month's late-leave
+        let before = (d.balances && d.balances[type] !== undefined) ? d.balances[type] : 0;
+        return '<input type="number" min="0" max="' + before + '" class="form-control form-control-sm ded-input" data-type="' + type + '" data-before="' + before + '" value="' + days + '">'
+             + '<div class="text-muted fs-8 mt-1">Balance left: <span class="bal-left">' + (before - days) + '</span></div>';
     }
+
+    // Update "Balance left" when HR changes a value, and never allow more than the available balance
+    $(document).on('input', '.ded-input', function () {
+        let before = parseFloat($(this).data('before')) || 0;
+        let v = parseInt($(this).val()) || 0;
+        if (v > before) {
+            v = before;
+            $(this).val(v);
+        }
+        if (v < 0) {
+            v = 0;
+            $(this).val(v);
+        }
+        $(this).next().find('.bal-left').text(before - v);
+    });
+
+    function statusBadge(d) {
+        if (d.status === 'approved') {
+            return '<span class="badge badge-light-success">Approved</span>';
+        }
+        if (d.status === 'changed') {
+            return '<span class="badge badge-light-warning">Approved (late count changed, please approve again)</span>';
+        }
+        return '<span class="badge badge-light-primary">Pending</span>';
+    }
+
+    function showMessage(isSuccess, text) {
+        $('#messageContainer')
+            .removeClass('alert-success alert-danger')
+            .addClass(isSuccess ? 'alert-success' : 'alert-danger')
+            .html(text)
+            .show();
+        setTimeout(function () {
+            $('#messageContainer').hide();
+        }, 5000);
+    }
+
     function CallBack(pdfdata) {
         let url;
         var year = $('#year').val();
@@ -182,30 +257,24 @@
                 success: function(data) {
                     table.clear().draw();
                     if (data.length > 0) {
-                        $('#jsdataerror').text('');
-                        // Add data to the table
                         $.each(data, function(key, value) {
                             let d = data[key];
-                            let late_leave = Math.floor(d.Late_Count / 4);
+                            let nameText = d.employee_name;
+                            if (d.uncovered_days > 0) {
+                                nameText += ' <span class="text-danger">(' + d.uncovered_days + ' day(s) not covered, no balance)</span>';
+                            }
+
                             table.row.add([
                                 '<input type="checkbox" class="row-checkbox" name="selected_users[]" value="' + d.eid + '">',
-                                d.employee_code,d.employee_name,d.Total_Casual_Leave,d.Deu_Casual_leave,
-                                '<input type="text" class="form-control form-control-sm" name="late_count[]" readonly  value="' + d.Late_Count + '">',
-                                '<input type="text" class="form-control form-control-sm" name="late_leave[]" readonly  oninput="validateNumberInput(this)" value="' + late_leave + '">'
+                                d.employee_code, nameText, statusBadge(d),
+                                '<input type="text" class="form-control form-control-sm" name="late_count[]" readonly value="' + d.Late_Count + '">',
+                                '<input type="text" class="form-control form-control-sm" name="late_leave[]" readonly value="' + d.late_leave + '">',
+                                dedInput(d, 'Casual'), dedInput(d, 'Sick'), dedInput(d, 'Annual'), dedInput(d, 'Special')
                             ]).draw();
                         });
-                        table.buttons().enable();
-                    } else {
-                        $('#jsdataerror').text('No records found');
-                        console.log('No records found');
                     }
                 }
             });
-        } else if (pdfdata == 'pdfurl') {
-            $('#downloadPdf').attr('href', url);
-        } else {
-            $('#jsdataerror').text('Please select a date');
-            console.log('Please select a date');
         }
     }
     CallBack("list");
@@ -214,68 +283,46 @@
         CallBack("list");
     });
 
-    $('#downloadPdf').on('click', function() {
-        CallBack("pdfurl");
-    });
-
-    
     function submitSelectedRows() {
-        // Get all selected checkboxes
         let selectedRows = $('#late_of_leave').find('.row-checkbox:checked');
 
-        // Check if at least one row is selected
         if (selectedRows.length === 0) {
             alert('Please select at least one row.');
             return;
         }
 
-        // Extract data from selected rows
         let selectedData = [];
         selectedRows.each(function () {
             let row = $(this).closest('tr');
-            let rowData = {
+            selectedData.push({
                 'selected_users': row.find('[name="selected_users[]"]').val(),
                 'late_count': row.find('[name="late_count[]"]').val(),
                 'late_leave': row.find('[name="late_leave[]"]').val(),
+                'deductions': JSON.stringify(
+                    row.find('.ded-input').map(function () {
+                        return { type: $(this).data('type'), days: parseInt($(this).val()) || 0 };
+                    }).get().filter(x => x.days > 0)
+                ),
                 'month': $('#month').val(),
                 'year': $('#year').val(),
-                // Add other fields as needed
-            };
-            selectedData.push(rowData);
-            console.log(selectedData);
+            });
         });
-        console.log('selectedData: ', selectedData);
-        // Get CSRF token from meta tag
-        const csrfToken = $('meta[name="csrf-token"]').attr('content');
 
-        // Send the data to the Laravel controller using AJAX
         $.ajax({
             url: '{{ route("late_of_leave_add") }}',
             method: 'POST',
             headers: {
-                'X-CSRF-TOKEN': csrfToken,
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
             },
             data: { selectedData: selectedData },
-            success: function (response) {
-                $('#messageContainer').removeClass('alert-danger').addClass('alert-success').html('Success message here.').show();
-
-                // Hide the message container after 5 seconds
-                setTimeout(function () {
-                    $('#messageContainer').hide();
-                }, 5000);
-
-                console.log(response);
+            success: function () {
+                showMessage(true, 'Leave deducted successfully.');
+                CallBack("list");
             },
             error: function (error) {
-                $('#messageContainer').removeClass('alert-success').addClass('alert-danger').html('Error message here.').show();
-
-                // Hide the message container after 5 seconds
-                setTimeout(function () {
-                    $('#messageContainer').hide();
-                }, 5000);
-                console.error(error);
+                let msg = (error.responseJSON && error.responseJSON.error) ? error.responseJSON.error : 'Something went wrong.';
+                showMessage(false, msg);
             }
         });
     }
-
 </script>

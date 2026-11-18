@@ -485,6 +485,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('late_of_leave', [leaveReportController::class, 'lateOFLeave'])->name('late_of_leave');
         Route::get('late_of_leave_report_search/{year}/{month}/{pdf}', [leaveReportController::class, 'lateOFLeaveReport'])->name('late_of_leave_report_search');
         Route::post('late_of_leave_add', [leaveReportController::class, 'addLateOFLeave'])->name('late_of_leave_add');
+        Route::post('late_leave_policy', [leaveReportController::class, 'saveLatePolicy'])->name('late_leave_policy_save');
 
         Route::resource('employee_leave_approve_dept', EmployeeLeaveApproveDeptController::class);
         Route::get('employee_leave_approve_dept_list', [EmployeeLeaveApproveDeptController::class, 'approvedIndex'])->name('employee_leave_approve_dept_list');

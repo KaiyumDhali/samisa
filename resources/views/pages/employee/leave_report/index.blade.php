@@ -161,9 +161,8 @@
                                 <th class="min-w-50px">code</th>
                                 <th class="min-w-100px">employee name</th>
                                 <th class="min-w-50px">No of Late</th>
-                                <th class="min-w-50px">Late Leave</th>
-                                <th class="min-w-50px">Casual</th>
-                                <th class="min-w-50px">Total Casual</th>
+                               <th class="min-w-100px">Late Deduction</th>
+<th class="min-w-50px">Casual</th>
                                 <th class="min-w-50px">Sick</th>
                                 <th class="min-w-50px">Annual</th>
                                 <th class="min-w-50px">Special</th>
@@ -302,7 +301,7 @@
                         $('#jsdataerror').text('');
                         $.each(data, function(key, value) {
                             let d = data[key];
-                            table.row.add([d.employee_code, d.employee_name, d.NoOfLate, d.LateOfLeave, d.casual, d.TotalCasual, d.sick, d.annual, d.special, d.LeaveAvailed, d.LeaveBalance, d.total_leave])
+                            table.row.add([d.employee_code, d.employee_name, d.NoOfLate, d.LateDeduction, d.casual, d.sick, d.annual, d.special, d.LeaveAvailed, d.LeaveBalance, d.total_leave])
                             .draw();
                         });
                         table.buttons().enable();
