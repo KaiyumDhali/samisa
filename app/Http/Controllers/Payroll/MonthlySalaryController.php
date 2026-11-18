@@ -188,7 +188,7 @@ class MonthlySalaryController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+    public function __store(Request $request)
     {
         // $salary_month = '2024-03'; // Enclose the string in quotes
         $salary_month = $request->selectedmonth;
@@ -266,7 +266,7 @@ class MonthlySalaryController extends Controller
     }
 
 
-    public function __store(Request $request)
+    public function store(Request $request)
     {
         $salary_month = $request->selectedmonth;
         // $branch_id = $request->branch_id;
@@ -290,7 +290,7 @@ class MonthlySalaryController extends Controller
                             ->whereNotIn('id', $addedMonthlySalary)->get();
 
             $remainingEmp = $findNewEmployees->pluck('id')->toArray();
-            dd($remainingEmp);   
+            // dd($remainingEmp);   
             $basic_salary = EmpPosting::whereIn('employee_id', $remainingEmp)->pluck('employee_id');
             // dd($basic_salary);
             $remainEmpId = array_diff($remainingEmp, $basic_salary->toArray());
