@@ -1,0 +1,14 @@
+.report-header {
+    background-color: rgb(218, 217, 217) !important;
+    color: #000000 !important;
+}
+
+table tr th {
+    text-align: center !important;
+    vertical-align: middle !important;
+}
+
+table tr td {
+    padding: 2px !important;
+    margin: 0 !important;
+}
