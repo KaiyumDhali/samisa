@@ -230,12 +230,19 @@ class PayrollCalculator
     /**
      * Overtime = sum(number_of_days x hours x rate). rate na thakle gross theke auto rate.
      */
-    private function overtimeAmount(int $employeeId, string $month, float $gross): float
+   private function overtimeAmount(int $employeeId, string $month, float $gross): float
     {
-        $autoRate = $gross / self::OVERTIME_MONTH_DAYS / self::OVERTIME_DAY_HOURS * self::OVERTIME_MULTIPLIER;
+        $autoRate = (new OvertimeService())->ratePerHour($gross);
+
+        $rows = DB::table('overtimes')
+            ->where('employee_id', $employeeId)
+            ->where('overtime_month', $month)
+            ->where(function ($q) {
+                $q->whereNull('status')->orWhere('status', 'approved');
+            })
+            ->get();
+
         $sum = 0.0;
-        $rows = DB::table('overtimes')->where('employee_id', $employeeId)
-            ->where('overtime_month', $month)->get();
         foreach ($rows as $o) {
             $rate = (float) $o->rate > 0 ? (float) $o->rate : $autoRate;
             $sum += (float) $o->number_of_days * (float) $o->hours * $rate;

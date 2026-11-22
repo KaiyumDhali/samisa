@@ -18,7 +18,7 @@ class MonthlySalary extends Model
         'income',
         'deduction',
         'net_payble',
-                'working_days',
+        'working_days',
         'present_days',
         'leave_days',
         'absent_days',

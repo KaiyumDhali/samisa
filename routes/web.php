@@ -597,6 +597,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::resource('deduction', DeductionController::class);
         Route::resource('loan', LoanController::class);
         Route::resource('other_payment', OtherPaymentController::class);
+
+                Route::post('overtime/generate', [OvertimeController::class, 'generate'])->name('overtime.generate');
+        Route::post('overtime/settings', [OvertimeController::class, 'settings'])->name('overtime.settings');
+        Route::post('overtime/eligibility', [OvertimeController::class, 'eligibility'])->name('overtime.eligibility');
+        Route::post('overtime/bulk-status', [OvertimeController::class, 'bulkStatus'])->name('overtime.bulk_status');
         Route::resource('overtime', OvertimeController::class);
 
         Route::resource('set_salaries', SetSalaryController::class);
