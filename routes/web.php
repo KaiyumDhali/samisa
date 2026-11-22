@@ -601,6 +601,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         Route::resource('set_salaries', SetSalaryController::class);
         Route::get('set_salaries_create/{id}', [SetSalaryController::class, 'setSalariesCreate'])->name('set_salaries.set_salaries_create');
+        Route::post('monthly_salaries_approve', [MonthlySalaryController::class, 'approve'])->name('monthly_salaries_approve');
+
         Route::resource('monthly_salaries', MonthlySalaryController::class);
         Route::get('monthly_salaries_list/{month}/{pdf}', [MonthlySalaryController::class, 'monthlySalariesList'])->name('monthly_salaries_list');
         // not need after

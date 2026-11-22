@@ -93,6 +93,11 @@
                                     </span>
                                 </div>
                             </div>
+                            <div class="form-check form-check-sm form-check-custom me-4 align-self-center">
+                                <input class="form-check-input" type="checkbox" name="regenerate" value="1" id="regenerate">
+                                <label class="form-check-label ms-2" for="regenerate"
+                                    title="Approve na-howa salary muche abar hishab korbe">Regenerate</label>
+                            </div>
                             <div class="float-end">
                                 <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="tooltip"
                                     title="{{ __('Generate') }}" data-original-title="{{ __('Generate Salary') }}"
@@ -102,6 +107,15 @@
                             </div>
                         </div>
                     </form>
+                    @can('write monthly salary')
+                    <form action="{{ route('monthly_salaries_approve') }}" method="POST" class="ms-4"
+                        onsubmit="return confirm('Ei mash-er shob pending salary approve korben? Approve-er por regenerate kora jabe na.');">
+                        @csrf
+                        <input type="hidden" name="salary_month" id="approve_month">
+                        <button type="submit" class="btn btn-sm btn-success"
+                            onclick="document.getElementById('approve_month').value = $('#kt_td_picker_year_month_only_search_input').val();">Approve</button>
+                    </form>
+                    @endcan
                 </div>
             </div>
         </div>
@@ -185,34 +199,7 @@
                     <table class="table table-striped table-bordered align-middle table-row-dashed fs-7 gy-5 mb-0"
                         id="kt_ecommerce_report_customer_orders_table">
                         <!--begin::Table head-->
-                        <thead>
-                            <tr style="text-align: center; vertical-align: middle;">
-                                <th class="min-w-50px" rowspan="2">ID</th>
-                                <th class="min-w-100px" rowspan="2">Employee Id</th>
-                                <th class="min-w-100px" rowspan="2">Employee Name</th>
-                                {{-- <th class="min-w-100px" rowspan="2">Designation</th> --}}
-                                <th style="text-align: center; vertical-align: middle;" colspan="7">Income</th>
-                                <th style="text-align: center; vertical-align: middle;" colspan="3">Deduction</th>
-                                <th class="text-start min-w-80px" rowspan="2">Net Payable</th>
-                                <th class="text-start min-w-80px" rowspan="2">Remarks</th>
-                            </tr>
-                            <!--begin::Table row-->
-                            <tr class="text-start fs-7 text-uppercase gs-0"
-                                style="text-align: center; vertical-align: middle;">
-                                <th class="min-w-80px">Basic</th>
-                                <th class="min-w-80px">House Rent</th>
-                                <th class="min-w-80px">Medical</th>
-                                <th class="min-w-80px">Gross Salary</th>
-                                <th class="min-w-80px">P/F</th>
-                                <th class="min-w-80px">Other</th>
-                                <th class="min-w-80px">Total Payable</th>
-                                <th class="text-start min-w-80px">Tax</th>
-                                <th class="text-start min-w-80px">P/F</th>
-                                <th class="text-start min-w-80px">Other</th>
-
-                            </tr>
-                            <!--end::Table row-->
-                        </thead>
+                        <thead id="salary_head"></thead>
                         <!--end::Table head-->
                         <!--begin::Table body-->
                         <tbody class="fw-semibold text-gray-700" id="attendance_list">
@@ -291,7 +278,8 @@
         paging: true,
         ordering: false,
         searching: true,
-        responsive: true,
+        responsive: false, // colspan/rowspan header-er sathe responsive mile na
+        scrollX: true,
         lengthMenu: [10, 25, 50, 100],
         pageLength: 25,
         language: {
@@ -305,7 +293,8 @@
             }
         }
     };
-    var table = $('#kt_ecommerce_report_customer_orders_table').DataTable(dataTableOptions);
+    var tableSelector = '#kt_ecommerce_report_customer_orders_table';
+    var table = null;
 
 
     function CallBack(pdfdata) {
@@ -328,38 +317,44 @@
                 },
                 dataType: "json",
                 success: function(data) {
-                    console.log('data:', data);
-                    table.clear().draw();
-                    if (data.length > 0) {
+                    // Age-er DataTable thakle (je-i toiri korechhe) destroy kore nei
+                    if ($.fn.DataTable.isDataTable(tableSelector)) {
+                        $(tableSelector).DataTable().destroy();
+                    }
+                    var heads = data.heads || [];
+                    var rows = data.rows || [];
+                    var inc = heads.filter(h => h.head_type === 'Income');
+                    var ded = heads.filter(h => h.head_type === 'Deduction');
+                    var fmt = v => (parseFloat(v) || 0).toFixed(2);
+
+                    var th = '<tr><th rowspan="2">ID</th><th rowspan="2">Employee Name</th>' +
+                        '<th colspan="4">Attendance</th><th rowspan="2">Basic</th>' +
+                        '<th colspan="' + (inc.length + 1) + '">Income</th>' +
+                        '<th colspan="' + (ded.length + 1) + '">Deduction</th>' +
+                        '<th rowspan="2">Net Payable</th><th rowspan="2">Status</th></tr><tr>' +
+                        '<th>Work</th><th>Present</th><th>Leave</th><th>Absent</th>' +
+                        inc.map(h => '<th>' + h.head_name + '</th>').join('') + '<th>Total Income</th>' +
+                        ded.map(h => '<th>' + h.head_name + '</th>').join('') + '<th>Total Deduction</th></tr>';
+                    $('#salary_head').html(th);
+
+                    var body = rows.map(function(r) {
+                        return '<tr><td>' + r.employee_code + '</td><td>' + r.employee_name + '</td>' +
+                            '<td>' + r.working_days + '</td><td>' + r.present_days + '</td><td>' + r.leave_days + '</td><td>' + r.absent_days + '</td>' +
+                            '<td>' + fmt(r.basic_salary) + '</td>' +
+                            inc.map(h => '<td>' + fmt(r.amounts['Income|' + h.head_name]) + '</td>').join('') +
+                            '<td>' + fmt(r.income) + '</td>' +
+                            ded.map(h => '<td>' + fmt(r.amounts['Deduction|' + h.head_name]) + '</td>').join('') +
+                            '<td>' + fmt(r.deduction) + '</td><td><b>' + fmt(r.net_payble) + '</b></td>' +
+                            '<td>' + (r.status == 1 ? 'Approved' : 'Pending') + '</td></tr>';
+                    }).join('');
+                    $('#attendance_list').html(body);
+
+                    if (rows.length > 0) {
                         $('#jsdataerror').text('');
-                        $.each(data, function(key, value) {
-                            let d = data[key];
-
-                            // Income
-                            var baseSalary = parseFloat(d.Base_Salary) || 0;
-                            var houseRent = parseFloat(d.House_Rent) || 0;
-                            var medical = parseFloat(d.Medical) || 0;
-                            var pf = parseFloat(d.PF) || 0;
-                            var others = parseFloat(d.iOthers) || 0;
-                            // Deduction
-                            var TAX = parseFloat(d.TAX) || 0;
-                            var dPF = parseFloat(d.dPF) || 0;
-                            var dOthers = parseFloat(d.dOthers) || 0;
-                            // Calculate total payable
-                            var Total_Payable = baseSalary + houseRent + medical + pf + others;
-                            var Gross_Salary = baseSalary + houseRent + medical;
-                            var Net_Payable = Total_Payable - TAX - dPF - dOthers;
-                            var Remarks = ""
-
-                            table.row.add([d.employee_order, d.employee_code, d.employee_name,
-                                d.Base_Salary, d.House_Rent, d.Medical, Gross_Salary, d.PF, d.iOthers,
-                                Total_Payable, d.TAX, d.dPF, d.dOthers, Net_Payable, Remarks
-                            ]).draw();
-                        });
+                        table = $(tableSelector).DataTable(dataTableOptions);
                         table.buttons().enable();
                     } else {
                         $('#jsdataerror').text('No records found');
-                        console.log('No records found');
                     }
                 }
             });

@@ -1629,7 +1629,7 @@
                 {{-- Add: Employee payroll Menu item --}}
                 @canany(['read monthly salary', 'read payroll head'])
                     <div data-kt-menu-trigger="click"
-                        class="menu-item menu-accordion {{ request()->routeIs('payroll_formulas*', 'payroll*', 'set_salaries*', 'monthly_salaries*', 'payslips*', 'payslip_type*', 'income_head*', 'deduction_head*', 'allowance_option*', 'loan_option*', 'payroll_head*') ? 'here show' : '' }}">
+                        class="menu-item menu-accordion {{ request()->routeIs('payroll_formulas*', 'payroll*', 'set_salaries*', 'monthly_salaries*', 'payslips*', 'payslip_type*', 'income_head*', 'deduction_head*', 'allowance_option*', 'loan_option*', 'payroll_head*','overtime*') ? 'here show' : '' }}">
                         <!--begin:Menu link-->
                         <span class="menu-link">
                             <i class="bi bi-cash-stack fs-2"></i>
@@ -1650,6 +1650,17 @@
                                             <span class="bullet bullet-dot"></span>
                                         </span>
                                         <span class="menu-title">Set Salaries</span>
+                                    </a>
+                                @endcan
+                                <!--end:Menu link-->
+                                                                <!--begin:Menu link-->
+                                @can('read monthly salary')
+                                    <a class="menu-link {{ request()->routeIs('overtime.*') ? 'active' : '' }}"
+                                        href="{{ route('overtime.index') }}">
+                                        <span class="menu-bullet">
+                                            <span class="bullet bullet-dot"></span>
+                                        </span>
+                                        <span class="menu-title">Overtime</span>
                                     </a>
                                 @endcan
                                 <!--end:Menu link-->

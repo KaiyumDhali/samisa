@@ -15,11 +15,13 @@ use App\Models\payrollFormula;
 use App\Models\PayrollHead;
 use App\Models\payroll;
 use App\Models\MonthlySalary;
+
 use App\Models\MonthlySalaryDetail;
 
 use App\Models\EmployeeDesignation;
 use App\Models\EmployeeSalary;
 use App\Models\Income;
+use App\Services\PayrollCalculator;
 use App\Models\Deduction;
 
 use Illuminate\Http\Request;
@@ -34,101 +36,69 @@ class MonthlySalaryController extends Controller
     function __construct() {
         $this->middleware('permission:read monthly salary|write monthly salary|create monthly salary', ['only' => ['index', 'show']]);
         $this->middleware('permission:create monthly salary', ['only' => ['create', 'store']]);
-        $this->middleware('permission:write monthly salary', ['only' => ['edit', 'update', 'destroy']]);
+        $this->middleware('permission:write monthly salary', ['only' => ['edit', 'update', 'destroy', 'approve']]);
     }
 
     // Generate monthly Salary List get
+       // Generate monthly Salary List get (head-agnostic: je head-ই thakuk dekhabe)
+        // Generate monthly Salary List get (head-agnostic: je head-ই thakuk dekhabe)
     public function monthlySalariesList($month, $pdf)
     {
-        // $month = 2023-11;
-        $query = "
-            SELECT
-                (SELECT e.order FROM employees e WHERE e.id=ms.employee_id) AS employee_order,
-                ms.employee_id AS employee_id,
-                ms.basic_salary AS Base_Salary,
-                DATE_FORMAT(ms.generate_date, '%Y-%m-%d') AS generate_date,
-                ms.salary_month AS salary_month,
-                (SELECT e.employee_name FROM employees e WHERE e.id=ms.employee_id) AS employee_name,
-                (SELECT e.employee_code FROM employees e WHERE e.id=ms.employee_id) AS employee_code,
+        return $this->salarySheet($month, $pdf, 0);
+    }
 
-                (SELECT msd.amount FROM  monthly_salary_details msd WHERE msd.monthly_salary_id=ms.id and msd.head_type='Income' and msd.head_id=1) AS House_Rent,
-                (SELECT msd.amount FROM  monthly_salary_details msd WHERE msd.monthly_salary_id=ms.id and msd.head_type='Income' and msd.head_id=2) AS Medical,
-                (SELECT msd.amount FROM  monthly_salary_details msd WHERE msd.monthly_salary_id=ms.id and msd.head_type='Income' and msd.head_id=3) AS PF,
-                (SELECT msd.amount FROM  monthly_salary_details msd WHERE msd.monthly_salary_id=ms.id and msd.head_type='Income' and msd.head_id=4) AS iOthers,
-                
-                (SELECT msd.amount FROM  monthly_salary_details msd WHERE msd.monthly_salary_id=ms.id and msd.head_type='Deduction' and msd.head_id=1) AS TAX,
-                (SELECT msd.amount FROM  monthly_salary_details msd WHERE msd.monthly_salary_id=ms.id and msd.head_type='Deduction' and msd.head_id=2) AS dPF,
-                (SELECT msd.amount FROM  monthly_salary_details msd WHERE msd.monthly_salary_id=ms.id and msd.head_type='Deduction' and msd.head_name='Others') AS dOthers
-                
-            FROM monthly_salaries AS ms
-            WHERE ms.salary_month = '$month'
-            ORDER BY employee_order ASC
-        ";
+    private function salarySheet($month, $pdf, $branchID = 0)
+    {
+        $salaries = MonthlySalary::where('salary_month', $month)
+            ->when($branchID, fn ($q) => $q->where('monthly_salaries.branch_id', $branchID))
+            ->join('employees', 'employees.id', '=', 'monthly_salaries.employee_id')
+            ->orderBy('employees.order')
+            ->select('monthly_salaries.*', 'employees.employee_name', 'employees.employee_code', 'employees.order as employee_order')
+            ->get();
 
-        $monthlySalaries = DB::table(DB::raw("($query) AS subquery"))
-                ->select('employee_order', 'employee_id', 'employee_code', 'employee_name', 'Base_Salary','House_Rent','Medical','PF','iOthers','TAX', 'dPF', 'dOthers')
-                ->orderBy('employee_order')
-                ->get();
+        $details = MonthlySalaryDetail::whereIn('monthly_salary_id', $salaries->pluck('id'))->get()
+            ->groupBy('monthly_salary_id');
+
+        // Column list: shob head, Income age, tarpor Deduction
+        $heads = MonthlySalaryDetail::whereIn('monthly_salary_id', $salaries->pluck('id'))
+            ->select('head_type', 'head_name')->distinct()->get()
+            ->sortBy(fn ($h) => ($h->head_type === 'Income' ? '0' : '1') . $h->head_name)->values();
+
+        $rows = $salaries->map(function ($ms) use ($details) {
+            $amounts = [];
+            foreach ($details->get($ms->id, collect()) as $d) {
+                $amounts[$d->head_type . '|' . $d->head_name] = (float) $d->amount;
+            }
+            return [
+                'employee_order' => $ms->employee_order,
+                'employee_code'  => $ms->employee_code,
+                'employee_name'  => $ms->employee_name,
+                'basic_salary'   => (float) $ms->basic_salary,
+                'working_days'   => $ms->working_days,
+                'present_days'   => $ms->present_days,
+                'leave_days'     => $ms->leave_days,
+                'absent_days'    => $ms->absent_days,
+                'income'         => (float) $ms->income,
+                'deduction'      => (float) $ms->deduction,
+                'net_payble'     => (float) $ms->net_payble,
+                'status'         => $ms->status,
+                'amounts'        => $amounts,
+            ];
+        });
+
         if ($pdf == "list") {
-            return response()->json($monthlySalaries);
+            return response()->json(['heads' => $heads, 'rows' => $rows]);
         }
         if ($pdf == "pdfurl") {
-            // $data['branch_id'] = $branchID; 
             $data['month'] = $month;
-            // Add the 'orientation' option to set landscape
-            $pdf = PDF::loadView('pages.pdf.monthly_salaries_report_pdf', array('monthlySalaries' => $monthlySalaries, 'data' => $data));
-            return $pdf->stream(Carbon::now().'-recentstat.pdf');
+            $pdf = PDF::loadView('pages.pdf.monthly_salaries_report_pdf', ['rows' => $rows, 'heads' => $heads, 'data' => $data]);
+            return $pdf->stream(Carbon::now() . '-salary-sheet.pdf');
         }
     }
 
-
     public function monthlySalaries($branchID, $month, $pdf)
     {
-        // $month = 2023-11;
-        $query = "
-            SELECT
-                (SELECT e.order FROM employees e WHERE e.id=ms.employee_id) AS employee_order,
-                
-                ms.employee_id AS employee_id,
-                ms.branch_id as branch_id,
-                DATE_FORMAT(ms.generate_date, '%Y-%m-%d') AS generate_date,
-                ms.salary_month AS salary_month,
-                
-                (SELECT e.employee_name FROM employees e WHERE e.id=ms.employee_id) AS employee_name,
-                (SELECT ed.designation_name FROM emp_designations ed WHERE ed.id=(SELECT e.designation_id FROM employees e WHERE e.id=ms.employee_id)) AS designation_name,
-                
-                (SELECT es.amount FROM  employee_salaries es WHERE es.employee_id=ms.employee_id ORDER BY ms.salary_month DESC LIMIT 1) AS Base_Salary,
-            
-                (SELECT msd.amount FROM  monthly_salary_details msd WHERE msd.monthly_salary_id=ms.id and msd.head_type='Income' and msd.head_id=1) AS House_Rent,
-                (SELECT msd.amount FROM  monthly_salary_details msd WHERE msd.monthly_salary_id=ms.id and msd.head_type='Income' and msd.head_id=2) AS Medical,
-                (SELECT msd.amount FROM  monthly_salary_details msd WHERE msd.monthly_salary_id=ms.id and msd.head_type='Income' and msd.head_id=3) AS PF,
-                (SELECT msd.amount FROM  monthly_salary_details msd WHERE msd.monthly_salary_id=ms.id and msd.head_type='Income' and msd.head_id=4) AS iOthers,
-                
-                (SELECT msd.amount FROM  monthly_salary_details msd WHERE msd.monthly_salary_id=ms.id and msd.head_type='Deduction' and msd.head_id=1) AS TAX,
-                (SELECT msd.amount FROM  monthly_salary_details msd WHERE msd.monthly_salary_id=ms.id and msd.head_type='Deduction' and msd.head_id=2) AS dPF,
-                (SELECT msd.amount FROM  monthly_salary_details msd WHERE msd.monthly_salary_id=ms.id and msd.head_type='Deduction' and msd.head_name='Others') AS dOthers
-                
-            FROM monthly_salaries AS ms
-            
-            WHERE ms.salary_month = '$month' AND (ms.branch_id=$branchID or $branchID=0)
-            
-            ORDER BY employee_order ASC
-        ";
-
-        $monthlySalaries = DB::table(DB::raw("($query) AS subquery"))
-                ->select('employee_order', 'employee_id', 'employee_name', 'designation_name','Base_Salary','House_Rent','Medical','PF','iOthers','TAX', 'dPF', 'dOthers')
-                ->orderBy('employee_order')
-                ->get();
-        if ($pdf == "list") {
-            return response()->json($monthlySalaries);
-        }
-        if ($pdf == "pdfurl") {
-            $data['branch_id'] = $branchID; 
-            $data['month'] = $month;
-            // Add the 'orientation' option to set landscape
-            $pdf = PDF::loadView('pages.pdf.monthly_salaries_report_pdf', array('monthlySalaries' => $monthlySalaries, 'data' => $data));
-            return $pdf->stream(Carbon::now().'-recentstat.pdf');
-        }
+        return $this->salarySheet($month, $pdf, (int) $branchID);
     }
     /**
      * Display a listing of the resource.
@@ -266,105 +236,96 @@ class MonthlySalaryController extends Controller
     }
 
 
-    public function store(Request $request)
+          public function store(Request $request)
     {
-        $salary_month = $request->selectedmonth;
-        // $branch_id = $request->branch_id;
-        $created_by = Auth::user()->id;
+        $request->validate(['selectedmonth' => ['required', 'regex:/^\d{4}-\d{2}$/']]);
+        $salary_month = $request->selectedmonth;           // e.g. 2026-11
+        $monthEnd     = date('Y-m-t', strtotime($salary_month . '-01'));
+        $created_by   = Auth::user()->id;
+        $calc         = new PayrollCalculator();
 
-        // find MonthlySalary table this month all ready generate salary
-        $addedMonthlySalary = MonthlySalary::where('salary_month', '=', $salary_month)->pluck('employee_id');
-        // dd($addedMonthlySalary);
+        // Regenerate: shudhu approve na-howa (status 0) salary muche abar toiri
+        if ($request->boolean('regenerate')) {
+            $ids = MonthlySalary::where('salary_month', $salary_month)->where('status', 0)->pluck('id');
+            MonthlySalaryDetail::whereIn('monthly_salary_id', $ids)->delete();
+            MonthlySalary::whereIn('id', $ids)->delete();
+        }
 
-        // find emp_postings table this joining_date match id count
-        $totalMonthlySalaryEmployee = Employee::leftJoin('emp_postings', 'emp_postings.employee_id', '=', 'employees.id')
-                                    ->select('employees.id', 'emp_postings.id,joining_date')
-                                    ->where('joining_date', '<=', date($salary_month . '-t'))->count();        
-        // dd($totalMonthlySalaryEmployee);
-        if ($totalMonthlySalaryEmployee > count($addedMonthlySalary)) {
+        $eligibleIds = Employee::join('emp_postings', 'emp_postings.employee_id', '=', 'employees.id')
+            ->where('employees.salary_held_up', 0)
+            ->whereDate('emp_postings.joining_date', '<=', $monthEnd)
+            ->where(function ($q) use ($salary_month) {
+                $q->whereNull('employees.quite_date')
+                  ->orWhere('employees.quite_date', '>=', $salary_month . '-01');
+            })
+            ->pluck('employees.id')->unique();
 
-            // $findNewEmployees = Employee::where('branch_id', $branch_id)->where('joining_date', '<=', date($salary_month . '-t'))->whereNotIn('id', $addedMonthlySalary)->get();
-            $findNewEmployees = Employee::leftJoin('emp_postings', 'emp_postings.employee_id', '=', 'employees.id')
-                            ->select('employees.*', 'emp_postings.joining_date')
-                            ->where('joining_date', '<=', date($salary_month . '-t'))
-                            ->whereNotIn('id', $addedMonthlySalary)->get();
+        $alreadyIds = MonthlySalary::where('salary_month', $salary_month)->pluck('employee_id');
+        $newIds = $eligibleIds->diff($alreadyIds);
 
-            $remainingEmp = $findNewEmployees->pluck('id')->toArray();
-            // dd($remainingEmp);   
-            $basic_salary = EmpPosting::whereIn('employee_id', $remainingEmp)->pluck('employee_id');
-            // dd($basic_salary);
-            $remainEmpId = array_diff($remainingEmp, $basic_salary->toArray());
-            $empCodes = $findNewEmployees->whereIn('id', $remainEmpId)->pluck('employee_code')->toArray();
-            $employee_code = implode(', ' ,array_values($empCodes));
-
-            if ($findNewEmployees->count() > $basic_salary->count()) {
-                return redirect()->route('monthly_salaries.index')->with([
-                    'message' => 'Ops! Please set '.$findNewEmployees->count() - $basic_salary->count().'(Employee Code: '.$employee_code.')'.' employees salary.',
-                    'alert-type' => 'danger'
-                ]);
-            }
-            // dd($basic_salary);
-            foreach ($findNewEmployees as $employee) {
-                $basic_salary_amount = EmpPosting::where('employee_id', $employee->id)->orderBy('id', 'desc')->value('gross_salary');
-                $total_income = Income::where('employee_id', $employee->id)->sum('amount');
-                $total_deduction = Deduction::where('employee_id', $employee->id)->sum('amount');
-                $net_payable = ($basic_salary_amount + $total_income) - $total_deduction;
-
-                // Add MonthlySalary
-                $monthlySalary = new MonthlySalary([
-                    'employee_id' => $employee->id,
-                    'generate_date' => Carbon::now()->format('Y-m-d'),
-                    'salary_month' => $salary_month,
-                    'basic_salary' => $basic_salary_amount,
-                    'income' => $total_income,
-                    'deduction' => $total_deduction,
-                    'net_payable' => $net_payable,
-                    'status' => 0,
-                    'created_by' => $created_by,
-                ]);
-                // dd($monthlySalary);
-                $monthlySalary->save();
-
-                // Add MonthlySalaryDetails
-                $incomes = Income::with(['incomeHead'])->where('employee_id', $employee->id)->get();
-                foreach ($incomes as $income) {
-                    $monthlySalaryDetail = new MonthlySalaryDetail([
-                        'monthly_salary_id' => $monthlySalary->id,
-                        'head_id' => $income->income_head,
-                        'head_name' => $income->incomeHead->name,
-                        'head_type' => 'Income',
-                        'amount' => $income->amount,
-                        'created_by' => Auth::user()->name,
-                    ]);
-
-                    $monthlySalaryDetail->save();
-                }
-
-                $deductions = Deduction::with(['deductionHead'])->where('employee_id', $employee->id)->get();
-                foreach ($deductions as $deduction) {
-                    $monthlySalaryDetail = new MonthlySalaryDetail([
-                        'monthly_salary_id' => $monthlySalary->id,
-                        'head_id' => $deduction->deduction_head,
-                        'head_name' => $deduction->deductionHead->name,
-                        'head_type' => 'Deduction',
-                        'amount' => $deduction->amount,
-                        'created_by' => Auth::user()->name,
-                    ]);
-
-                    $monthlySalaryDetail->save();
-                }
-            }
-
+        if ($newIds->isEmpty()) {
             return redirect()->route('monthly_salaries.index')->with([
-                'message' => 'Salary successfully created.',
-                'alert-type' => 'success'
-            ]);
-        } else {
-            return redirect()->route('monthly_salaries.index')->with([
-                'message' => 'Salary Already created.',
-                'alert-type' => 'danger'
+                'message' => 'Salary already created for this month.',
+                'alert-type' => 'danger',
             ]);
         }
+
+        // Gross salary set na thakle ager-e janiye deya
+        $noSalary = $newIds->filter(fn ($id) => !(float) EmpPosting::where('employee_id', $id)->orderByDesc('id')->value('gross_salary'));
+        if ($noSalary->isNotEmpty()) {
+            $codes = Employee::whereIn('id', $noSalary)->pluck('employee_code')->implode(', ');
+            return redirect()->route('monthly_salaries.index')->with([
+                'message' => 'Gross salary set kora nai (Employee Code: ' . $codes . ')',
+                'alert-type' => 'danger',
+            ]);
+        }
+
+        DB::transaction(function () use ($newIds, $salary_month, $created_by, $calc) {
+            foreach ($newIds as $employeeId) {
+                $res = $calc->calculate((int) $employeeId, $salary_month);
+
+                $monthly = MonthlySalary::create([
+                    'employee_id'   => $employeeId,
+                    'branch_id'     => EmpPosting::where('employee_id', $employeeId)->orderByDesc('id')->value('branch_id'),
+                    'generate_date' => Carbon::now(),
+                    'salary_month'  => $salary_month,
+                    'basic_salary'  => $res['basic_salary'],
+                    'income'        => $res['income'],
+                    'deduction'     => $res['deduction'],
+                    'net_payble'    => $res['net_payble'],
+                    'working_days'  => $res['working_days'],
+                    'present_days'  => $res['present_days'],
+                    'leave_days'    => $res['leave_days'],
+                    'absent_days'   => $res['absent_days'],
+                    'status'        => 0,
+                    'created_by'    => $created_by,
+                ]);
+
+                foreach ($res['rows'] as $row) {
+                    MonthlySalaryDetail::create($row + [
+                        'monthly_salary_id' => $monthly->id,
+                        'created_by'        => Auth::user()->name,
+                    ]);
+                }
+            }
+        });
+
+        return redirect()->route('monthly_salaries.index')->with([
+            'message' => 'Salary successfully created for ' . $newIds->count() . ' employee(s).',
+            'alert-type' => 'success',
+        ]);
+    }
+
+    /** Mash-er shob pending salary approve (lock) kora. */
+    public function approve(Request $request)
+    {
+        $request->validate(['salary_month' => ['required', 'regex:/^\d{4}-\d{2}$/']]);
+        $count = MonthlySalary::where('salary_month', $request->salary_month)->where('status', 0)
+            ->update(['status' => 1, 'approved_by' => Auth::user()->name]);
+        return back()->with([
+            'message' => $count . ' salary approved.',
+            'alert-type' => 'success',
+        ]);
     }
     /**
      * Display the specified resource.

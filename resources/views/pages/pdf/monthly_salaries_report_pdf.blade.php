@@ -50,101 +50,75 @@
         </tbody>
     </table>
 
+           @php
+        $incomeHeads = $heads->where('head_type', 'Income')->values();
+        $deductionHeads = $heads->where('head_type', 'Deduction')->values();
+        $tot = ['basic' => 0, 'income' => 0, 'deduction' => 0, 'net' => 0];
+        $headTot = [];
+    @endphp
     <table class="table table-bordered table-striped table-sm table-hover">
-        @if ($monthlySalaries)
-            <thead class="text-light bg-secondary ">
-                <tr style="text-uppercase text-align: center; vertical-align: middle;">
-                    <th class="min-w-50px" style="text-align: center; vertical-align: middle;" rowspan="2">ID</th>
-                    {{-- <th class="min-w-100px" rowspan="2">Employee Id</th> --}}
-                    <th class="min-w-100px" style="text-align: center; vertical-align: middle;" rowspan="2">Employee Name</th>
-                    <th style="text-align: center; vertical-align: middle;" colspan="7">Income</th>
-                    <th style="text-align: center; vertical-align: middle;" colspan="3">Deduction</th>
-                    <th class="text-start min-w-80px" style="text-align: center; vertical-align: middle;" rowspan="2">Net Payable</th>
-                    <th class="text-start min-w-80px" style="text-align: center; vertical-align: middle;" rowspan="2">Remarks</th>
-                </tr>
-                <!--begin::Table row-->
-                <tr class="text-start fs-7 text-uppercase gs-0"
-                    style="text-align: center; vertical-align: middle;">
-                    <th class="min-w-80px">Basic</th>
-                    <th class="min-w-80px">House Rent</th>
-                    <th class="min-w-80px">Medical</th>
-                    <th class="min-w-80px">Gross Salary</th>
-                    <th class="min-w-80px">P/F</th>
-                    <th class="min-w-80px">Other</th>
-                    <th class="min-w-80px">Total Payable</th>
-                    <th class="text-start min-w-80px">Tax</th>
-                    <th class="text-start min-w-80px">P/F</th>
-                    <th class="text-start min-w-80px">Other</th>
-                </tr>
-                <!--end::Table row-->
-            </thead>
-            <tbody>
-                @php
-                    $SumTotalPayable = 0;
-                    $SumTax = 0;
-                    $SumDPF = 0;
-                    $SumDOther = 0;
-                    $SumNetPayable = 0;
-                @endphp
-                @foreach ($monthlySalaries as $key => $monthlySalarie)
-                    @php
-                        // Income
-                        $baseSalary = floatval($monthlySalarie->Base_Salary) ?? 0;
-                        $houseRent = floatval($monthlySalarie->House_Rent) ?? 0;
-                        $medical = floatval($monthlySalarie->Medical) ?? 0;
-                        $pf = floatval($monthlySalarie->PF) ?? 0;
-                        $others = floatval($monthlySalarie->iOthers) ?? 0;
-                        // Deduction
-                        $TAX = floatval($monthlySalarie->TAX) ?? 0;
-                        $dPF = floatval($monthlySalarie->dPF) ?? 0;
-                        $dOthers = floatval($monthlySalarie->dOthers) ?? 0;
-                        // Calculate total payable
-                        $Gross_Salary = $baseSalary + $houseRent + $medical;
-                        $Total_Payable = $baseSalary + $houseRent + $medical + $pf + $others;
-                        // Calculate total Net Payable
-                        $Net_Payable = $Total_Payable - $TAX - $dPF - $dOthers;
-                        $Remarks = "";
-
-
-                        $SumTotalPayable +=$Total_Payable;
-                        $SumTax +=$TAX;
-                        $SumDPF +=$dPF;
-                        $SumDOther +=$dOthers;
-                        $SumNetPayable +=$Net_Payable;
-                    @endphp
-                    <tr>
-                        <td>{{ $monthlySalarie->employee_code }}</td>
-                        {{-- <td>{{ $monthlySalarie->employee_id }}</td> --}}
-                        <td>{{ $monthlySalarie->employee_name }}</td>
-                        <td class="text-right">{{ $monthlySalarie->Base_Salary }}</td>
-                        <td class="text-right">{{ $monthlySalarie->House_Rent }}</td>
-                        <td class="text-right">{{ $monthlySalarie->Medical }}</td>
-                        <td class="text-right">{{ $Gross_Salary }}</td>
-                        <td class="text-right">{{ $monthlySalarie->PF }}</td>
-                        <td class="text-right">{{ $monthlySalarie->iOthers }}</td>
-                        <td class="text-right">{{ $Total_Payable }}</td>
-                        <td class="text-right">{{ $monthlySalarie->TAX }}</td>
-                        <td class="text-right">{{ $monthlySalarie->dPF }}</td>
-                        <td class="text-right">{{ $monthlySalarie->dOthers }}</td>
-                        <td class="text-right">{{ $Net_Payable }}</td>
-                        <td>{{ $Remarks }}</td>
-                    </tr>
-                @endforeach
-                <tr style="text-uppercase">
-                    <th class="min-w-50px text-center text-light bg-secondary " colspan="8">Total BDT</th>
-                    <th class="min-w-80px text-light bg-secondary text-right">{{ $SumTotalPayable}}</th>
-                    <th class="text-start min-w-80px text-light bg-secondary text-right">{{$SumTax}}</th>
-                    <th class="text-start min-w-80px text-light bg-secondary text-right">{{$SumDPF}}</th>
-                    <th class="text-start min-w-80px text-light bg-secondary text-right">{{$SumDOther}}</th>
-                    <th class="text-start min-w-80px text-light bg-secondary text-right">{{$SumNetPayable}}</th>
-                    <th class="text-start min-w-80px text-light bg-secondary text-right"></th>
-                </tr>
-            </tbody>
-        @else
-            <tr class="text-center">
-                <td colspan="5">No Statistics History Found !!!</td>
+        <thead class="text-light bg-secondary">
+            <tr style="text-align: center; vertical-align: middle;">
+                <th rowspan="2">ID</th>
+                <th rowspan="2">Employee Name</th>
+                <th colspan="4">Attendance</th>
+                <th rowspan="2">Basic</th>
+                <th colspan="{{ $incomeHeads->count() + 1 }}">Income</th>
+                <th colspan="{{ $deductionHeads->count() + 1 }}">Deduction</th>
+                <th rowspan="2">Net Payable</th>
+                <th rowspan="2">Remarks</th>
             </tr>
-        @endif
+            <tr style="text-align: center; vertical-align: middle;">
+                <th>Work</th><th>Present</th><th>Leave</th><th>Absent</th>
+                @foreach ($incomeHeads as $h)<th>{{ $h->head_name }}</th>@endforeach
+                <th>Total Income</th>
+                @foreach ($deductionHeads as $h)<th>{{ $h->head_name }}</th>@endforeach
+                <th>Total Deduction</th>
+            </tr>
+        </thead>
+        <tbody>
+            @forelse ($rows as $r)
+                @php
+                    $tot['basic'] += $r['basic_salary']; $tot['income'] += $r['income'];
+                    $tot['deduction'] += $r['deduction']; $tot['net'] += $r['net_payble'];
+                @endphp
+                <tr>
+                    <td>{{ $r['employee_code'] }}</td>
+                    <td>{{ $r['employee_name'] }}</td>
+                    <td class="text-right">{{ $r['working_days'] }}</td>
+                    <td class="text-right">{{ $r['present_days'] }}</td>
+                    <td class="text-right">{{ $r['leave_days'] }}</td>
+                    <td class="text-right">{{ $r['absent_days'] }}</td>
+                    <td class="text-right">{{ number_format($r['basic_salary'], 2) }}</td>
+                    @foreach ($incomeHeads as $h)
+                        @php $v = $r['amounts']['Income|' . $h->head_name] ?? 0; $headTot['Income|' . $h->head_name] = ($headTot['Income|' . $h->head_name] ?? 0) + $v; @endphp
+                        <td class="text-right">{{ number_format($v, 2) }}</td>
+                    @endforeach
+                    <td class="text-right">{{ number_format($r['income'], 2) }}</td>
+                    @foreach ($deductionHeads as $h)
+                        @php $v = $r['amounts']['Deduction|' . $h->head_name] ?? 0; $headTot['Deduction|' . $h->head_name] = ($headTot['Deduction|' . $h->head_name] ?? 0) + $v; @endphp
+                        <td class="text-right">{{ number_format($v, 2) }}</td>
+                    @endforeach
+                    <td class="text-right">{{ number_format($r['deduction'], 2) }}</td>
+                    <td class="text-right"><b>{{ number_format($r['net_payble'], 2) }}</b></td>
+                    <td>{{ $r['status'] == 1 ? 'Approved' : 'Pending' }}</td>
+                </tr>
+            @empty
+                <tr class="text-center"><td colspan="20">No salary found for this month</td></tr>
+            @endforelse
+            @if (count($rows))
+                <tr class="text-light bg-secondary">
+                    <th colspan="6" class="text-center">Total BDT</th>
+                    <th class="text-right">{{ number_format($tot['basic'], 2) }}</th>
+                    @foreach ($incomeHeads as $h)<th class="text-right">{{ number_format($headTot['Income|' . $h->head_name] ?? 0, 2) }}</th>@endforeach
+                    <th class="text-right">{{ number_format($tot['income'], 2) }}</th>
+                    @foreach ($deductionHeads as $h)<th class="text-right">{{ number_format($headTot['Deduction|' . $h->head_name] ?? 0, 2) }}</th>@endforeach
+                    <th class="text-right">{{ number_format($tot['deduction'], 2) }}</th>
+                    <th class="text-right">{{ number_format($tot['net'], 2) }}</th>
+                    <th></th>
+                </tr>
+            @endif
+        </tbody>
     </table>
     
     <table class="table table-borderless pt-5 mt-5">
