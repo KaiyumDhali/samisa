@@ -84,6 +84,7 @@ class leaveReportController extends Controller
             'leave_type' => $v['leave_type'],
             'fallback_leave_type' => $v['fallback_leave_type'] ?? null,
             'repeat_deduction' => $request->boolean('repeat_deduction'),
+            'count_early_out' => $request->boolean('count_early_out'),
             'status' => 1,
             'done_by' => Auth::user()->name,
         ]);
@@ -114,17 +115,12 @@ class leaveReportController extends Controller
 return view('pages.employee.leave_report.late_of_leave', compact('allEmpBranch', 'policy'));
     }
     
-    public function lateOFLeaveReport($year, $month, $pdf)
+        public function lateOFLeaveReport($year, $month, $pdf)
     {
-        // $year = 2023;
-        // $month = 'September';
-
-        // Convert month name to month number
         $monthNumber = Carbon::parse($month)->month;
-
-        // Create start and end dates
         $startDate = Carbon::create($year, $monthNumber, 1)->toDateString();
         $endDate = Carbon::create($year, $monthNumber, 1)->endOfMonth()->toDateString();
+        $countEarly = LateLeavePolicy::current()->count_early_out ? 1 : 0;
 
         $query = "
             WITH LeaveData AS (
@@ -134,35 +130,39 @@ return view('pages.employee.leave_report.late_of_leave', compact('allEmpBranch',
                     (select e.employee_code from employees e where e.id = es.employee_id) as employee_code,
                     (select e.employee_name from employees e where e.id = es.employee_id) as employee_name,
                     (SELECT IFNULL(SUM(le.total_days), 0) FROM employee_leave_entries le WHERE le.leave_year ='$year' AND le.employee_id = es.employee_id AND le.leave_type = 'Casual' AND le.final_status = 1) as Approve_Casual_Leave,
-                es.casual_leave as Total_Casual_Leave
+                    es.casual_leave as Total_Casual_Leave
                 FROM employee_leave_settings es 
                 WHERE es.leave_year = '$year'
             ),
-            
-            LateData AS (
-                SELECT *
-                FROM
-                    ( select * from ( SELECT *        
-                        FROM
-                            attendances a
-                                JOIN (
-                                SELECT ADDDATE('1970-01-01', t4.i * 10000 + t3.i * 1000 + t2.i * 100 + t1.i * 10 + t0.i) AS _date
-                                FROM 
-                                    (SELECT 0 i UNION SELECT 1 UNION SELECT 2 UNION SELECT 3 UNION SELECT 4 UNION SELECT 5 UNION SELECT 6 UNION SELECT 7 UNION SELECT 8 UNION SELECT 9 )t0,
-                                    (SELECT 0 i UNION SELECT 1 UNION SELECT 2 UNION SELECT 3 UNION SELECT 4 UNION SELECT 5 UNION SELECT 6 UNION SELECT 7 UNION SELECT 8 UNION SELECT 9) t1,
-                                    (SELECT 0 i UNION SELECT 1 UNION SELECT 2 UNION SELECT 3 UNION SELECT 4 UNION SELECT 5 UNION SELECT 6 UNION SELECT 7 UNION SELECT 8 UNION SELECT 9) t2,
-                                    (SELECT 0 i UNION SELECT 1 UNION SELECT 2 UNION SELECT 3 UNION SELECT 4 UNION SELECT 5 UNION SELECT 6 UNION SELECT 7 UNION SELECT 8 UNION SELECT 9) t3,
-                                    (SELECT 0 i UNION SELECT 1 UNION SELECT 2 UNION SELECT 3 UNION SELECT 4 UNION SELECT 5 UNION SELECT 6 UNION SELECT 7 UNION SELECT 8 UNION SELECT 9) t4
-                                )v on v._date=a.date_only_record
-                        WHERE
-                            v._date BETWEEN '$startDate' AND '$endDate'    
-                )v1
-                group by v1.date_only_record, v1.employee_code)f 
-                WHERE Time(f.date_time_record) > time((SELECT late_time FROM late_times ORDER BY id DESC LIMIT 1))
+            -- first punch (in) and last punch (out) of each working day
+            DayPunch AS (
+                SELECT a.employee_code, a.date_only_record AS punch_date,
+                       MIN(a.date_time_record) AS first_punch,
+                       MAX(a.date_time_record) AS last_punch,
+                       COUNT(*) AS punches
+                FROM attendances a
+                WHERE a.date_only_record BETWEEN '$startDate' AND '$endDate'
+                  AND DAYNAME(a.date_only_record) NOT IN (SELECT weekend_day FROM weekend_days WHERE weekend_day IS NOT NULL)
+                  AND NOT EXISTS (SELECT 1 FROM holidays h WHERE a.date_only_record BETWEEN h.date AND h.end_date)
+                GROUP BY a.employee_code, a.date_only_record
+            ),
+            -- a day is late / early-out unless an approved application covers it
+            DayFlags AS (
+                SELECT e.id AS eid, p.punch_date,
+                    (TIME(p.first_punch) > TIME((SELECT late_time FROM late_times ORDER BY id DESC LIMIT 1))
+                     AND NOT EXISTS (SELECT 1 FROM employee_delayin_earlyouts x
+                                     WHERE x.employee_id = e.id AND x.date = p.punch_date
+                                       AND x.status IN ('delay_in', 'out_of_office'))) AS is_late,
+                    ($countEarly = 1 AND p.punches >= 2
+                     AND TIME(p.last_punch) < TIME((SELECT end_time FROM work_times ORDER BY id DESC LIMIT 1))
+                     AND NOT EXISTS (SELECT 1 FROM employee_delayin_earlyouts x
+                                     WHERE x.employee_id = e.id AND x.date = p.punch_date
+                                       AND x.status IN ('early_out', 'out_of_office'))) AS is_early
+                FROM DayPunch p
+                JOIN employees e ON CAST(e.employee_code AS UNSIGNED) = p.employee_code
             )
-                       SELECT *,  (Total_Casual_Leave - Approve_Casual_Leave) AS Deu_Casual_leave, 
-            if( ((SELECT COUNT(ld.employee_code) FROM LateData ld WHERE ld.employee_code = LeaveData.employee_code)-(SELECT COUNT(id) FROM `employee_delayin_earlyouts` as dl WHERE dl.date BETWEEN '$startDate' AND '$endDate' AND dl.employee_id = eid)) >0, ((SELECT COUNT(ld.employee_code) FROM LateData ld WHERE ld.employee_code = LeaveData.employee_code)-(SELECT COUNT(id) FROM `employee_delayin_earlyouts` as dl WHERE dl.date BETWEEN '$startDate' AND '$endDate' AND dl.employee_id = eid)) ,0)
-            AS Late_Count
+            SELECT *, (Total_Casual_Leave - Approve_Casual_Leave) AS Deu_Casual_leave,
+                (SELECT COUNT(*) FROM DayFlags f WHERE f.eid = LeaveData.eid AND (f.is_late = 1 OR f.is_early = 1)) AS Late_Count
             FROM LeaveData ORDER BY eorder
             ";
         $employeeDetails = DB::select($query);

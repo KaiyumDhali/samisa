@@ -64,6 +64,14 @@ class PayrollCalculator
         }
 
         $leaveDates = $this->approvedLeaveDates($employeeId, $monthStart, $monthEnd);
+                // Approved Out of Office days count as present; HR "Mark as Absent" days count as absent
+        [$ooDates, $absDates] = $this->attendanceExceptionDates($employeeId, $monthStart, $monthEnd);
+        foreach ($absDates as $d => $_) {
+            if (!isset($ooDates[$d])) {
+                unset($presentDates[$d], $leaveDates[$d]);
+            }
+        }
+        $presentDates = $presentDates + $ooDates;
 
         $r = $this->classifyDays(
             $periodStart, $periodEnd, $weekendNames, $holidays, $presentDates, $leaveDates
@@ -198,6 +206,29 @@ class PayrollCalculator
             }
         }
         return $out;
+    }
+
+
+        /** Dates marked Out of Office (present) or Absent by HR in the exceptions table. */
+    private function attendanceExceptionDates(int $employeeId, Carbon $from, Carbon $to): array
+    {
+        $oo = [];
+        $abs = [];
+        $rows = DB::table('employee_delayin_earlyouts')
+            ->where('employee_id', $employeeId)
+            ->whereBetween('date', [$from->toDateString(), $to->toDateString()])
+            ->whereIn('status', ['out_of_office', 'absences'])
+            ->get(['date', 'status']);
+
+        foreach ($rows as $r) {
+            $key = Carbon::parse($r->date)->toDateString();
+            if ($r->status === 'out_of_office') {
+                $oo[$key] = true;
+            } else {
+                $abs[$key] = true;
+            }
+        }
+        return [$oo, $abs];
     }
 
     /** Approved (final_status=1) leave; "Monthly Late Leave" bad (ota present-er din-er upor katа hoy). */

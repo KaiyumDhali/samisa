@@ -39,6 +39,7 @@
                                 (fallback: {{ $policy->fallback_leave_type }})
                             @endif
                             {{ $policy->repeat_deduction ? '- repeat' : '- one time' }}
+                           @if ($policy->count_early_out) + early out @endif
                         </span>
                     </div>
                     <div class="card-toolbar">
@@ -83,6 +84,13 @@
                                         <input class="form-check-input" type="checkbox" name="repeat_deduction" value="1" id="repeat_deduction"
                                             {{ $policy->repeat_deduction ? 'checked' : '' }}>
                                         <label class="form-check-label fs-7" for="repeat_deduction">Repeat (6 late = 2 days)</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" name="count_early_out" value="1" id="count_early_out"
+                                            {{ $policy->count_early_out ? 'checked' : '' }}>
+                                        <label class="form-check-label fs-7" for="count_early_out">Count early out as late</label>
                                     </div>
                                 </div>
                                 <div class="col-md-2">
