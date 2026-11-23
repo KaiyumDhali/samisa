@@ -856,12 +856,12 @@
                                         <span class="menu-bullet">
                                             <span class="bullet bullet-dot"></span>
                                         </span>
-                                        <span class="menu-title">Finish Goods Stock</span>
+                                        <span class="menu-title">Product Stock</span>
                                     </a>
                                 @endcan
                                 <!--end:Menu link-->
                                 <!--begin:Menu link-->
-                                @can('read stock report')
+                                {{-- @can('read stock report')
                                     <a class="menu-link {{ request()->routeIs('material_wise_stock_report*') ? 'active' : '' }}"
                                         href="{{ route('material_wise_stock_report') }}">
                                         <span class="menu-bullet">
@@ -869,7 +869,7 @@
                                         </span>
                                         <span class="menu-title">RAW Material Stock</span>
                                     </a>
-                                @endcan
+                                @endcan --}}
                                 <!--end:Menu link-->
                                 <!--begin:Menu link-->
                                 @can('read stock report')
