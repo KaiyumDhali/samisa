@@ -22,6 +22,9 @@ use App\Http\Controllers\Product\SalesController;
 //Service
 use App\Http\Controllers\Product\ProductServiceController;
 // Product
+
+
+use App\Http\Controllers\Finance\BalanceSheetController;
 use App\Http\Controllers\Product\WarehouseController;
 use App\Http\Controllers\Product\StockController;
 use App\Http\Controllers\Product\ProductController;
@@ -669,6 +672,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         Route::get('summary_report', [FinanceTransactionController::class, 'summaryReport'])->name('summary_report');
         Route::get('summary_report_search/{startDate}/{endDate}/{pdf}', [FinanceTransactionController::class, 'summaryReportSearch'])->name('summary_report_search');
+                // Balance Sheet
+        Route::get('balance_sheet', [BalanceSheetController::class, 'index'])->name('balance_sheet');
+        Route::get('balance_sheet_pdf', [BalanceSheetController::class, 'pdf'])->name('balance_sheet_pdf');
+        Route::get('balance_sheet_excel', [BalanceSheetController::class, 'excel'])->name('balance_sheet_excel');
     });
 });
 

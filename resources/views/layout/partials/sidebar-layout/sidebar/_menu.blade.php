@@ -1140,7 +1140,7 @@
                 {{-- Add: Finance Menu item --}}
                 @canany(['read general ledger'])
                     <div data-kt-menu-trigger="click"
-                        class="menu-item menu-accordion {{ request()->routeIs('journal_voucher', 'cash_book_ledger', 'cash_book_ledger_search', 'bank_book_ledger', 'bank_book_ledger_search', 'total_customer_receivable_list', 'total_supplier_payable_list', 'received_voucher*', 'payment_voucher*', 'finances.index*', 'accounts.index*', 'general_ledger*') ? 'here show' : '' }}">
+                        class="menu-item menu-accordion {{ request()->routeIs('journal_voucher', 'cash_book_ledger', 'cash_book_ledger_search', 'bank_book_ledger', 'bank_book_ledger_search', 'total_customer_receivable_list', 'total_supplier_payable_list', 'received_voucher*', 'payment_voucher*', 'finances.index*', 'accounts.index*', 'general_ledger*', 'summary_report*', 'balance_sheet*') ? 'here show' : '' }}">
                         <!--begin:Menu link-->
                         <span class="menu-link">
                             <i class="bi bi-cash-stack fs-2"></i>
@@ -1251,6 +1251,16 @@
                                     </span>
                                     <span class="menu-title">Summary Report</span>
                                 </a>
+
+                                                                <!--begin:Menu link-->
+                                <a class="menu-link {{ request()->routeIs('balance_sheet*') ? 'active' : '' }}"
+                                    href="{{ route('balance_sheet') }}">
+                                    <span class="menu-bullet">
+                                        <span class="bullet bullet-dot"></span>
+                                    </span>
+                                    <span class="menu-title">Balance Sheet</span>
+                                </a>
+                                <!--end:Menu link-->
                                 <!--end:Menu link-->
                             </div>
                             <!--end:Menu item-->
