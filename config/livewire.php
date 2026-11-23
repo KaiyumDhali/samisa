@@ -54,8 +54,8 @@ return [
     |
     */
 
-    // 'asset_url' => env('LIVEWIRE_ASSET_URL', null),
-    'asset_url' => 'https://nrberp.link/jago/public',
+    'asset_url' => env('LIVEWIRE_ASSET_URL', null),
+    // 'asset_url' => 'https://nrberp.link/jago/public',
 
     /*
     |--------------------------------------------------------------------------

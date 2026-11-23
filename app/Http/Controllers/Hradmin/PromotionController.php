@@ -42,7 +42,7 @@ class PromotionController extends Controller {
                 ->orderBy('id', 'desc')
                 ->get();
 
-    //    dd($promotions);
+//        dd($promotions);
 
         return view('pages.hradmin.promotion.index', compact('allEmpDesignation', 'allEmployees', 'employees', 'promotions', 'allEmpBranch', 'allDepartment'));
 
@@ -56,6 +56,7 @@ class PromotionController extends Controller {
         //     return redirect()->back()->with('error', __('Permission denied.'));
         // }
     }
+
 
     public function create() {
 

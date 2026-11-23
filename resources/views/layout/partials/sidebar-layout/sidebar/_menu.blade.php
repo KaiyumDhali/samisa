@@ -660,7 +660,42 @@
                     </div>
                 @endcanany
                 {{-- End: Service --}}
-
+ {{-- Add: Lift Service Menu item --}}
+                @canany(['read lift service', 'write lift service'])
+                    <div data-kt-menu-trigger="click"
+                        class="menu-item menu-accordion {{ request()->routeIs('lift.*') ? 'here show' : '' }}">
+                        <span class="menu-link">
+                            <i class="bi bi-arrow-down-up fs-2"></i>
+                            <span class="menu-title ms-4">Lift Service</span>
+                            <span class="menu-arrow"></span>
+                        </span>
+                        <div class="menu-sub menu-sub-accordion">
+                            <div class="menu-item">
+                                <a class="menu-link {{ request()->routeIs('lift.dashboard') ? 'active' : '' }}" href="{{ route('lift.dashboard') }}">
+                                    <span class="menu-bullet"><span class="bullet bullet-dot"></span></span>
+                                    <span class="menu-title">Dashboard</span>
+                                </a>
+                                <a class="menu-link {{ request()->routeIs('lift.units.*') ? 'active' : '' }}" href="{{ route('lift.units.index') }}">
+                                    <span class="menu-bullet"><span class="bullet bullet-dot"></span></span>
+                                    <span class="menu-title">Lifts</span>
+                                </a>
+                                <a class="menu-link {{ request()->routeIs('lift.contracts.*') ? 'active' : '' }}" href="{{ route('lift.contracts.index') }}">
+                                    <span class="menu-bullet"><span class="bullet bullet-dot"></span></span>
+                                    <span class="menu-title">AMC Contracts</span>
+                                </a>
+                                <a class="menu-link {{ request()->routeIs('lift.jobs.*') ? 'active' : '' }}" href="{{ route('lift.jobs.index') }}">
+                                    <span class="menu-bullet"><span class="bullet bullet-dot"></span></span>
+                                    <span class="menu-title">Service Jobs</span>
+                                </a>
+                                <a class="menu-link {{ request()->routeIs('lift.bills.*') ? 'active' : '' }}" href="{{ route('lift.bills.index') }}">
+                                    <span class="menu-bullet"><span class="bullet bullet-dot"></span></span>
+                                    <span class="menu-title">Service Bills</span>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                @endcanany
+                {{-- End: Lift Service Menu item --}}
                 {{-- Add: Service --}}
                 {{-- @canany(['read company setting'])
                     <div data-kt-menu-trigger="click"
@@ -856,12 +891,12 @@
                                         <span class="menu-bullet">
                                             <span class="bullet bullet-dot"></span>
                                         </span>
-                                        <span class="menu-title">Product Stock</span>
+                                        <span class="menu-title">Product Stock Reports</span>
                                     </a>
                                 @endcan
                                 <!--end:Menu link-->
                                 <!--begin:Menu link-->
-                                {{-- @can('read stock report')
+                               {{-- @can('read stock report')
                                     <a class="menu-link {{ request()->routeIs('material_wise_stock_report*') ? 'active' : '' }}"
                                         href="{{ route('material_wise_stock_report') }}">
                                         <span class="menu-bullet">
@@ -1137,6 +1172,8 @@
                 @endcanany
                 {{-- End: Production Menu item --}}
 
+               
+
                 {{-- Add: Finance Menu item --}}
                 @canany(['read general ledger'])
                     <div data-kt-menu-trigger="click"
@@ -1251,8 +1288,8 @@
                                     </span>
                                     <span class="menu-title">Summary Report</span>
                                 </a>
-
-                                                                <!--begin:Menu link-->
+                                <!--end:Menu link-->
+                                <!--begin:Menu link-->
                                 <a class="menu-link {{ request()->routeIs('balance_sheet*') ? 'active' : '' }}"
                                     href="{{ route('balance_sheet') }}">
                                     <span class="menu-bullet">
@@ -1260,7 +1297,6 @@
                                     </span>
                                     <span class="menu-title">Balance Sheet</span>
                                 </a>
-                                <!--end:Menu link-->
                                 <!--end:Menu link-->
                             </div>
                             <!--end:Menu item-->
@@ -1596,7 +1632,7 @@
                                 <!--end:Menu link-->
 
                                 <!--begin:Menu link-->
-                                {{-- @can('read promotion')
+                                 @can('read promotion')
                                 <a class="menu-link {{ request()->routeIs('promotion.*') ? 'active' : '' }}"
                                     href="{{ route('promotion.index') }}">
                                     <span class="menu-bullet">
@@ -1604,7 +1640,7 @@
                                     </span>
                                     <span class="menu-title">Promotion</span>
                                 </a>
-                            @endcan --}}
+                            @endcan 
                                 <!--end:Menu link-->
                                 <!--begin:Menu link-->
                                 {{-- @can('read announcement')
@@ -1803,7 +1839,7 @@
                 {{-- End: Employee payroll Menu item --}}
 
                 {{-- Add: Employee Performance Menu item --}}
-                {{-- <div data-kt-menu-trigger="click"
+             <div data-kt-menu-trigger="click"
                     class="menu-item menu-accordion {{ request()->routeIs('performance_type*', 'employee_performance*') ? 'here show' : '' }}">
                     <!--begin:Menu link-->
                     <span class="menu-link">
@@ -1843,7 +1879,7 @@
                         <!--end:Menu item-->
                     </div>
                     <!--end:Menu sub-->
-                </div> --}}
+                </div> 
                 {{-- End: Employee Performance Menu item --}}
 
 

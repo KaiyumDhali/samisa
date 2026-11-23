@@ -4,6 +4,9 @@ $GLOBALS['PurchaseAccountName'] = "Purchase Account";
 $GLOBALS['PurchaseAccountID'] = 13;
 $GLOBALS['SalesAccountName'] = "Sales Account";
 $GLOBALS['SalesAccountID'] = 14;
+// Lift Service income account (Finance > Accounts e Income group er under e khola account)
+$GLOBALS['ServiceAccountName'] = "Service Account";
+$GLOBALS['ServiceAccountID'] = 449;
 $GLOBALS['CustomerGroupCode'] = 100020001;
 $GLOBALS['SupplierGroupCode'] = 400010001;
 

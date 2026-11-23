@@ -22,9 +22,6 @@ use App\Http\Controllers\Product\SalesController;
 //Service
 use App\Http\Controllers\Product\ProductServiceController;
 // Product
-
-
-use App\Http\Controllers\Finance\BalanceSheetController;
 use App\Http\Controllers\Product\WarehouseController;
 use App\Http\Controllers\Product\StockController;
 use App\Http\Controllers\Product\ProductController;
@@ -117,6 +114,12 @@ use App\Http\Controllers\DownloadDB\DownloaddbController;
 use App\Http\Controllers\Finance\FinanceGroupController;
 use App\Http\Controllers\Finance\FinanceAccountController;
 use App\Http\Controllers\Finance\FinanceTransactionController;
+use App\Http\Controllers\Finance\BalanceSheetController;
+use App\Http\Controllers\Lift\LiftDashboardController;
+use App\Http\Controllers\Lift\LiftUnitController;
+use App\Http\Controllers\Lift\LiftContractController;
+use App\Http\Controllers\Lift\LiftJobController;
+use App\Http\Controllers\Lift\LiftBillController;
 
 /*
   |--------------------------------------------------------------------------
@@ -328,7 +331,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         // finish_good_wise_stock_report
         Route::get('finish_good_wise_stock_report', [StockController::class, 'stockReportFinishGoodWise'])->name('finish_good_wise_stock_report');
-        Route::get('finish_good_wise_stock_search/{startDate}/{endDate}/{warehouseId}/{productId}/{pdf}', [StockController::class, 'stockReportFinishGoodWiseSearch'])->name('finish_good_wise_stock_search');
+        Route::get('/finish-good-wise-stock-search/{startDate}/{endDate}/{warehouseId}/{productId}/{typeId}/{pdf}',
+    [StockController::class, 'stockReportFinishGoodWiseSearch'])
+    ->name('finish_good_wise_stock_search');
 
         // item_wise_stock_report
         Route::get('item_wise_stock_report', [StockController::class, 'stockReportItemWise'])->name('item_wise_stock_report');
@@ -499,7 +504,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::resource('employee_leave_approve_manag', EmployeeLeaveApproveManagController::class);
         Route::get('employee_leave_approve_manag_list', [EmployeeLeaveApproveManagController::class, 'approvedIndex'])->name('employee_leave_approve_manag_list');
 
-                Route::post('emp_delayin_earlyout/decide', [EmployeeDelayinEarlyoutController::class, 'decide'])->name('emp_delayin_earlyout.decide');
         Route::resource('emp_delayin_earlyout', EmployeeDelayinEarlyoutController::class);
 
         // performance
@@ -673,10 +677,33 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         Route::get('summary_report', [FinanceTransactionController::class, 'summaryReport'])->name('summary_report');
         Route::get('summary_report_search/{startDate}/{endDate}/{pdf}', [FinanceTransactionController::class, 'summaryReportSearch'])->name('summary_report_search');
-                // Balance Sheet
+
+        // Balance Sheet
         Route::get('balance_sheet', [BalanceSheetController::class, 'index'])->name('balance_sheet');
         Route::get('balance_sheet_pdf', [BalanceSheetController::class, 'pdf'])->name('balance_sheet_pdf');
         Route::get('balance_sheet_excel', [BalanceSheetController::class, 'excel'])->name('balance_sheet_excel');
+    });
+
+    // Lift Service (AMC contract, service job, bill)
+    Route::prefix('lift-service')->name('lift.')->group(function () {
+        Route::get('/', [LiftDashboardController::class, 'index'])->name('dashboard');
+
+        Route::resource('units', LiftUnitController::class)->except(['show', 'destroy'])->parameters(['units' => 'unit']);
+
+        Route::get('contracts/units-by-customer/{customerId}', [LiftContractController::class, 'unitsByCustomer'])->name('contracts.units_by_customer');
+        Route::resource('contracts', LiftContractController::class)->only(['index', 'create', 'store', 'show'])->parameters(['contracts' => 'contract']);
+        Route::post('contracts/{contract}/bill', [LiftContractController::class, 'generateBill'])->name('contracts.bill');
+        Route::post('contracts/{contract}/cancel', [LiftContractController::class, 'cancel'])->name('contracts.cancel');
+
+        Route::resource('jobs', LiftJobController::class)->only(['index', 'create', 'store', 'show'])->parameters(['jobs' => 'job']);
+        Route::post('jobs/{job}/complete', [LiftJobController::class, 'complete'])->name('jobs.complete');
+        Route::post('jobs/{job}/cancel', [LiftJobController::class, 'cancel'])->name('jobs.cancel');
+        Route::post('jobs/{job}/bill', [LiftJobController::class, 'bill'])->name('jobs.bill');
+
+        Route::get('bills', [LiftBillController::class, 'index'])->name('bills.index');
+        Route::get('bills/{bill}', [LiftBillController::class, 'show'])->name('bills.show');
+        Route::post('bills/{bill}/pay', [LiftBillController::class, 'pay'])->name('bills.pay');
+        Route::post('bills/{bill}/cancel', [LiftBillController::class, 'cancel'])->name('bills.cancel');
     });
 });
 

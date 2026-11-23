@@ -76,6 +76,18 @@
                                 </select>
                             </div>
                         </div>
+                        <div class="col-md-2 py-2">
+    <div class="form-groupmy-3">
+        <label>{{ __('Product Type') }}</label>
+        <select id="typeId" class="form-select form-select-sm" name="type_id"
+            data-control="select2" data-hide-search="false">
+            <option selected value="0">ALL Type</option>
+            @foreach ($productTypes as $type)
+                <option value="{{ $type->id }}">{{ $type->type_name }}</option>
+            @endforeach
+        </select>
+    </div>
+</div>
                         <div class="col-md-3 py-2">
                             <div class="form-groupmy-3">
                                 <label>{{ __('Select Product') }}</label>
@@ -220,8 +232,11 @@
         var warehouseId = $('#warehouseId').val() || 0;
         var productId = $('#productId').val() || 0;
         var sl = 1;
-        url =
-            '{{ route('finish_good_wise_stock_search', ['startDate' => ':startDate', 'endDate' => ':endDate', 'warehouseId' => ':warehouseId', 'productId' => ':productId', 'pdf' => ':pdf']) }}';
+       var typeId = $('#typeId').val() || 0;
+
+url = '{{ route('finish_good_wise_stock_search', ['startDate' => ':startDate', 'endDate' => ':endDate', 'warehouseId' => ':warehouseId', 'productId' => ':productId', 'typeId' => ':typeId', 'pdf' => ':pdf']) }}';
+
+url = url.replace(':typeId', typeId);
 
         url = url.replace(':startDate', startDate);
         url = url.replace(':endDate', endDate);

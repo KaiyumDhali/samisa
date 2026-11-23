@@ -11,6 +11,7 @@ use App\Models\SupplierLedger;
 use App\Models\Customer;
 use App\Models\CustomerLedger;
 use App\Models\Product;
+use App\Models\ProductType;
 use App\Models\ProductCategory;
 use App\Models\ProductSubCategory;
 use App\Models\ProductBrand;
@@ -154,22 +155,31 @@ class StockController extends Controller
     }
 
     // stockReportFinishGoodWise
-    public function stockReportFinishGoodWise()
-    {
-        $warehouses = Warehouse::where('status', 1)->get();
-        $products = Product::where('status', 1)->get();
-        $startDate = Carbon::now()->format('d-m-Y');
-        $endDate = Carbon::now()->format('d-m-Y');
-        return view('pages.product.stock.stock_report_finish_good_wise', compact('warehouses', 'products', 'startDate', 'endDate'));
+   public function stockReportFinishGoodWise()
+{
+    $startDate = Carbon::now()->format('d-m-Y');
+    $endDate   = Carbon::now()->format('d-m-Y');
+
+    $warehouses   = Warehouse::where('status', 1)->get();
+    $products     = Product::where('status', 1)->get();
+    $productTypes = ProductType::where('status', 1)->get(); // tomar model/table onujayi
+
+    return view('pages.product.stock.stock_report_finish_good_wise',
+        compact('startDate', 'endDate', 'warehouses', 'products', 'productTypes'));
+}
+
+public function stockReportFinishGoodWiseSearch($startDate, $endDate, $warehouseId, $productId, $typeId, $pdf)
+{
+    $stockReportFinishGoodWise = DB::connection()->select(
+        "CALL sp_StockReportFinishGoodWise(?, ?, ?, ?, ?)",
+        [$startDate, $endDate, $warehouseId, $productId, $typeId]
+    );
+
+    if ($pdf == "list") {
+        return response()->json($stockReportFinishGoodWise);
     }
-    public function stockReportFinishGoodWiseSearch($startDate, $endDate, $warehouseId, $productId, $pdf)
-    {
-        // $stockReportFinishGoodWise = DB::connection()->select("CALL sp_StockReportFinishGood(?, ?, ?)", array($startDate, $endDate, $warehouseId));
-        $stockReportFinishGoodWise = DB::connection()->select("CALL sp_StockReportFinishGoodWise(?, ?, ?, ?)", array($startDate, $endDate, $warehouseId, $productId));
-        if ($pdf == "list") {
-            return response()->json($stockReportFinishGoodWise);
-        }
-        if ($pdf == "pdfurl") {
+
+    if ($pdf == "pdfurl") {
             $companySetting = CompanySetting::where('status', 1)->orderBy('id', 'desc')->first();
             $data['company_name'] = $companySetting->company_name;
             $data['company_address'] = $companySetting->company_address;
