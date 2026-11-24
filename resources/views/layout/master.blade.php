@@ -61,6 +61,9 @@
         {!! sprintf('<link rel="stylesheet" href="%s">', asset($path)) !!}
     @endforeach
     <!--end::Custom Stylesheets-->
+
+    {{-- Company Settings > Theme Color: puro site-er primary color override --}}
+    <style id="dynamic-theme-color">{!! \App\Helpers\ThemeColor::css($companySetting->theme_color ?? null) !!}</style>
     {{-- <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.13.18/css/bootstrap-select.min.css"> --}}
 
     @livewireStyles

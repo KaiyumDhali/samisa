@@ -41,6 +41,7 @@ class CompanySettingController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'company_name' => ['required', 'string', 'max:255'],
+            'theme_color' => ['nullable', 'regex:/^#[0-9a-fA-F]{6}$/'],
         ]);
         if ($validator->fails()) {
             return back()->withErrors($validator)->withInput();
@@ -102,6 +103,7 @@ class CompanySettingController extends Controller
 
         $validator = Validator::make($request->all(), [
             'company_name' => ['required', 'string', 'max:255'],
+            'theme_color' => ['nullable', 'regex:/^#[0-9a-fA-F]{6}$/'],
         ]);
 
         if ($validator->fails()) {

@@ -28,6 +28,7 @@ class CompanySetting extends Model
         'vat_no',
         'vat_rate',
         'currency',
+        'theme_color',
         'water_mark',
         'company_logo_one',
         'company_logo_two',
