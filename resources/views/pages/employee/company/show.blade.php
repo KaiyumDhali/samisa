@@ -100,6 +100,13 @@
                                                     <td>{{ $companySetting->currency }}</td>
                                                 </tr>
                                                 <tr>
+                                                    <th>Theme Color</th>
+                                                    <td>
+                                                        <span class="d-inline-block align-middle rounded border me-2" style="width:22px;height:22px;background:{{ $companySetting->theme_color ?: '#3699FF' }}"></span>
+                                                        {{ $companySetting->theme_color ?: '#3699FF (default)' }}
+                                                    </td>
+                                                </tr>
+                                                <tr>
                                                     <th>Status</th>
                                                     <td>{{ $companySetting->status == 1 ? 'Active' : 'Disabled' }}</td>
                                                 </tr>
