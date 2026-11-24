@@ -36,7 +36,7 @@ class ThemeColor
         [$ar, $ag, $ab] = self::rgb($active);
 
         return <<<CSS
-:root,[data-bs-theme=light],[data-bs-theme=dark]{--bs-primary:$c;--bs-primary-active:$active;--bs-primary-light:$light;--bs-primary-inverse:$inv;--bs-primary-rgb:$r,$g,$b;--bs-link-color:$c;--bs-link-hover-color:$active;--bs-text-primary:$c;--bs-component-active-bg:$c;--bs-component-hover-color:$c;--bs-component-checked-bg:$c}
+:root,[data-bs-theme=light],[data-bs-theme=dark]{--bs-primary:$c;--bs-primary-active:$active;--bs-primary-light:$light;--bs-primary-inverse:$inv;--bs-primary-rgb:$r,$g,$b;--bs-link-color:$c;--bs-link-hover-color:$active;--bs-text-primary:$c;--bs-component-active-bg:$c;--bs-component-hover-color:$c;--bs-component-checked-bg:$c;--bs-app-sidebar-light-menu-link-icon-color:$c;--bs-app-sidebar-light-menu-link-icon-color-hover:$c;--bs-app-sidebar-light-menu-link-icon-color-active:$c;--bs-app-sidebar-light-menu-link-color-hover:$c;--bs-app-sidebar-light-menu-link-color-active:$c;--bs-app-sidebar-light-menu-link-bg-color-active:$light}
 .text-primary,.text-hover-primary:hover,.text-active-primary.active,.text-active-primary:hover,a.text-hover-primary:hover{color:$c!important}
 .bg-primary,.bg-hover-primary:hover,.bg-active-primary.active{background-color:$c!important;color:$inv}
 .bg-light-primary,.bg-hover-light-primary:hover,.bg-active-light-primary.active{background-color:$light!important}
@@ -70,6 +70,12 @@ a{color:var(--bs-link-color)}a:hover{color:var(--bs-link-hover-color)}
 .menu-state-bg-light-primary .menu-item .menu-link:hover:not(.disabled):not(.active),.menu-state-bg-light-primary .menu-item .menu-link.active,.menu-state-bg-light-primary .menu-item.here>.menu-link,.menu-state-bg-light-primary .menu-item.show>.menu-link{background-color:$light;color:$c}
 .menu-state-bullet-primary .menu-item .menu-link.active .menu-bullet .bullet,.menu-state-bullet-primary .menu-item .menu-link:hover .menu-bullet .bullet{background-color:$c}
 .app-sidebar .menu-item .menu-link.active,.app-sidebar .menu-item.here>.menu-link,.app-sidebar .menu-item.show>.menu-link{color:$c}
+.app-sidebar .menu .menu-link>i,.app-sidebar .menu .menu-link .menu-icon i,.app-sidebar .menu .menu-link .menu-icon .svg-icon,.app-sidebar .menu .menu-link .menu-icon .svg-icon svg [fill]:not(.permanent):not(g),.app-sidebar .menu .menu-link .svg-icon-success svg [fill]:not(.permanent):not(g),.app-sidebar .menu .menu-link .svg-icon.svg-icon-success{color:$c!important;fill:$c}
+.app-sidebar .menu .menu-link>i::before{color:$c!important}
+.app-sidebar .menu .menu-link .menu-icon .svg-icon svg [fill]:not(.permanent):not(g),.app-sidebar .menu .menu-link .svg-icon svg [fill]:not(.permanent):not(g){fill:$c!important}
+.app-sidebar .menu .menu-link.active,.app-sidebar .menu .menu-link.active .menu-title,.app-sidebar .menu .menu-link:hover .menu-title,.app-sidebar .menu .menu-item.here>.menu-link .menu-title,.app-sidebar .menu .menu-item.show>.menu-link .menu-title{color:$c!important}
+.app-sidebar .menu .menu-link.active,.app-sidebar .menu .menu-item.here>.menu-link{background-color:$light!important}
+.app-sidebar .menu .menu-link .menu-bullet .bullet,.app-sidebar .menu .menu-link.active .menu-bullet .bullet{background-color:$c}
 .app-header-primary{background-color:$c}
 .svg-icon.svg-icon-primary,.svg-icon-primary .svg-icon,.svg-icon.svg-icon-primary svg [fill]:not(.permanent):not(g){fill:$c}
 .bullet.bullet-primary,.symbol.symbol-light-primary .symbol-label,.symbol-label.bg-light-primary{background-color:$light;color:$c}
