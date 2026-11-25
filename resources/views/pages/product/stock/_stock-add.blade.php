@@ -514,7 +514,7 @@
                                 name="remarks" />
                         </div>
                         <button type="submit" id="submitBtn"
-                            class="btn btn-sm btn-success px-5 mt-5">{{ __('Purchase') }}</button>
+                            class="btn btn-sm btn-primary px-5 mt-5">{{ __('Purchase') }}</button>
                     </div>
                 </div>
             </div>

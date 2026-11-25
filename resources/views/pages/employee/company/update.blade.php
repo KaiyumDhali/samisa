@@ -164,8 +164,38 @@
                                             </div>
                                         </div>
                                     </div>
-
+                                    @php
+                                        $isCustomTheme = !empty($companySetting->theme_color);
+                                    @endphp
                                     <div class="col-12 col-md-6">
+                                        <div class="card-body pt-0 pb-2">
+                                            <div class="fv-row fv-plugins-icon-container">
+                                                <label class="form-label">Theme Color</label>
+
+                                                <div class="d-flex align-items-center gap-5 mb-3">
+                                                    <label class="form-check form-check-custom form-check-solid">
+                                                        <input class="form-check-input" type="radio" name="theme_mode" value="default"
+                                                            {{ !$isCustomTheme ? 'checked' : '' }}>
+                                                        <span class="form-check-label">Default ({{ \App\Helpers\ThemeColor::DEFAULT }})</span>
+                                                    </label>
+
+                                                    <label class="form-check form-check-custom form-check-solid">
+                                                        <input class="form-check-input" type="radio" name="theme_mode" value="custom"
+                                                            {{ $isCustomTheme ? 'checked' : '' }}>
+                                                        <span class="form-check-label">Custom</span>
+                                                    </label>
+                                                </div>
+
+                                                <div id="custom_color_wrap" class="d-flex align-items-center gap-3 mb-2"
+                                                    style="{{ $isCustomTheme ? '' : 'display:none !important;' }}">
+                                                    <input type="color" name="theme_color" id="theme_color_input"
+                                                        class="form-control form-control-color"
+                                                        value="{{ $isCustomTheme ? $companySetting->theme_color : \App\Helpers\ThemeColor::DEFAULT }}"
+                                                        title="Choose theme color">
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>                          <div class="col-12 col-md-6">
                                         <div class="card-body pt-0 pb-2">
                                             <div class="fv-row fv-plugins-icon-container">
                                                 <label class=" form-label"> Default Left Menu Logo (170px X 60px)</label>
@@ -238,4 +268,25 @@
         <!--end::Content wrapper-->
     
     </div>
-    </x-default-layout>
+  
+
+    <script>
+document.addEventListener('DOMContentLoaded', function () {
+    const radios = document.querySelectorAll('input[name="theme_mode"]');
+    const wrap = document.getElementById('custom_color_wrap');
+
+    function toggleCustom() {
+        const mode = document.querySelector('input[name="theme_mode"]:checked').value;
+        if (mode === 'custom') {
+            wrap.style.removeProperty('display');
+            wrap.style.display = 'flex';
+        } else {
+            wrap.style.setProperty('display', 'none', 'important');
+        }
+    }
+
+    radios.forEach(r => r.addEventListener('change', toggleCustom));
+    toggleCustom();
+});
+</script>
+  </x-default-layout>

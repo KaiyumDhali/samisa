@@ -41,6 +41,7 @@ class CompanySettingController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'company_name' => ['required', 'string', 'max:255'],
+            'theme_color' => ['nullable', 'regex:/^#[0-9a-fA-F]{6}$/'],
         ]);
         if ($validator->fails()) {
             return back()->withErrors($validator)->withInput();
@@ -96,58 +97,47 @@ class CompanySettingController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, $id)
-    {
-        $companySetting = CompanySetting::find($id);
+  public function update(Request $request, $id)
+{
+    $companySetting = CompanySetting::findOrFail($id);
 
-        $validator = Validator::make($request->all(), [
-            'company_name' => ['required', 'string', 'max:255'],
-        ]);
+    $validator = Validator::make($request->all(), [
+        'company_name' => ['required', 'string', 'max:255'],
+        'theme_mode'   => ['nullable', 'in:default,custom'],
+        'theme_color'  => ['nullable', 'regex:/^#[0-9a-fA-F]{6}$/'],
+    ]);
 
-        if ($validator->fails()) {
-            return back()->withErrors($validator)->withInput();
-        }
-
-        $input = $request->all();
-
-        // if ($request->hasfile('company_logo_one')) {
-        //     $image = $request->file('company_logo_one');
-        //     $name = date('d-m-Y-H-i-s') . '_' . $image->getClientOriginalName();
-        //     $image_path = $image->storeAs('public/images/company', $name);
-        //     $input['company_logo_one'] = $image_path;
-        // }
-
-        // if ($request->hasfile('company_logo_two')) {
-        //     $image = $request->file('company_logo_two');
-        //     $name = date('d-m-Y-H-i-s') . '-' . $image->getClientOriginalName();
-        //     $image_path = $image->storeAs('public/images/company', $name);
-        //     $input['company_logo_two'] = $image_path;
-        // }
-
-        // if ($request->hasfile('company_footer_logo')) {
-        //     $image = $request->file('company_footer_logo');
-        //     $name = date('d-m-Y-H-i-s') . '-' . $image->getClientOriginalName();
-        //     $image_path = $image->storeAs('public/images/company', $name);
-        //     $input['company_footer_logo'] = $image_path;
-        // }
-
-        // Handle file uploads and deletions
-        foreach (['company_logo_one', 'company_logo_two', 'company_footer_logo'] as $fileField) {
-            if ($request->hasfile($fileField)) {
-                Storage::delete($companySetting->$fileField);
-                $input[$fileField] = $request->file($fileField)->storeAs('public/images/company', date('d-m-Y-H-i-s') . '_' . $request->file($fileField)->getClientOriginalName());
-            }
-        }
-
-        $companySetting->update($input);
-
-        return redirect()->route('emp_company.index')->with([
-            'message' => 'Successfully updated!',
-            'alert-type' => 'info'
-        ]);
+    if ($validator->fails()) {
+        return back()->withErrors($validator)->withInput();
     }
 
+    $input = $request->except('theme_mode');
 
+    // Default select korle theme_color null, custom hole picker-er value
+    if ($request->input('theme_mode') === 'default') {
+        $input['theme_color'] = null;
+    } elseif ($request->input('theme_mode') === 'custom') {
+        $input['theme_color'] = $request->input('theme_color');
+    }
+
+    // Handle file uploads and deletions
+    foreach (['company_logo_one', 'company_logo_two', 'company_footer_logo'] as $fileField) {
+        if ($request->hasfile($fileField)) {
+            Storage::delete($companySetting->$fileField);
+            $input[$fileField] = $request->file($fileField)->storeAs(
+                'public/images/company',
+                date('d-m-Y-H-i-s') . '_' . $request->file($fileField)->getClientOriginalName()
+            );
+        }
+    }
+
+    $companySetting->update($input);
+
+    return redirect()->route('emp_company.index')->with([
+        'message' => 'Successfully updated!',
+        'alert-type' => 'info'
+    ]);
+}
     /**
      * Remove the specified resource from storage.
      */

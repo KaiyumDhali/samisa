@@ -503,7 +503,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         Route::resource('employee_leave_approve_manag', EmployeeLeaveApproveManagController::class);
         Route::get('employee_leave_approve_manag_list', [EmployeeLeaveApproveManagController::class, 'approvedIndex'])->name('employee_leave_approve_manag_list');
-
+Route::post('emp_delayin_earlyout/decide', [EmployeeDelayinEarlyoutController::class, 'decide'])->name('emp_delayin_earlyout.decide');
         Route::resource('emp_delayin_earlyout', EmployeeDelayinEarlyoutController::class);
 
         // performance

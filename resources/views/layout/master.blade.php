@@ -62,7 +62,7 @@
     @endforeach
     <!--end::Custom Stylesheets-->
     {{-- <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.13.18/css/bootstrap-select.min.css"> --}}
-
+    <style id="dynamic-theme-color">{!! \App\Helpers\ThemeColor::css($companySetting->theme_color ?? null) !!}</style>
     @livewireStyles
 
 </head>

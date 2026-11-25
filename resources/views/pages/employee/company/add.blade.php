@@ -161,7 +161,18 @@
                                             </div>
                                         </div>
                                     </div>
-
+<div class="col-12 col-md-6">
+    <div class="card-body pt-0 pb-2">
+        <div class="fv-row fv-plugins-icon-container">
+            <label class="form-label">Theme Color</label>
+            <div class="d-flex align-items-center gap-3 mb-2">
+                <input type="color" name="theme_color" class="form-control form-control-color"
+                    value="#3699FF" title="Choose theme color">
+                <span class="text-muted fs-7">Puro site-er primary color (button, link, menu, badge) ei color-e hobe</span>
+            </div>
+        </div>
+    </div>
+</div>
                                     <div class="col-12 col-md-6">
                                         <div class="card-body pt-0 pb-2">
                                             <div class="fv-row fv-plugins-icon-container">

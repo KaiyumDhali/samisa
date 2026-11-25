@@ -23,6 +23,7 @@ class CompanySetting extends Model
         'linkdin_url',
         'instagram_url',
         'trade_license',
+        'theme_color',
         'tin_no',
         'bin_no',
         'vat_no',
