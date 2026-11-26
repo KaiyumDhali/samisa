@@ -120,25 +120,30 @@ class EmployeeLeaveEntryController extends Controller
     }
     
     // section wise employee list and leave entry details 
-    public function leaveEntrySectionWiseEmployeeDetails($id)
-    {
-        $employees = EmployeeLeaveSetting::select('employee_leave_settings.employee_id')
+    public function leaveEntrySectionWiseEmployeeDetails(Request $request, $id)
+{
+    $year = $request->input('year', Carbon::now()->format('Y'));
+
+    $employees = EmployeeLeaveSetting::select('employee_leave_settings.employee_id')
+        ->whereHas('employee')
         ->with(['employee:id,employee_name'])
         ->where('section_id', $id)
+        ->where('leave_year', $year)
+        ->groupBy('employee_leave_settings.employee_id')
+        ->get();
+
+    $employeeDetails = EmployeeLeaveEntry::select('employee_leave_entries.*')
+        ->with(['employeeId:id,employee_name', 'alternativeEmployeeId:id,employee_name'])
+        ->where('section_id', $id)
+        ->where('leave_year', $year)
         ->orderBy('id', 'desc')
         ->get();
 
-        $employeeDetails = EmployeeLeaveEntry::select('employee_leave_entries.*')
-                        ->with(['employeeId:id,employee_name', 'alternativeEmployeeId:id,employee_name'])
-                        ->where('section_id', $id)
-                        ->orderBy('id', 'desc')
-                        ->get();
-
-        return response()->json([
-            'employees' => $employees,
-            'employeeDetails' => $employeeDetails,
-        ]);
-    }
+    return response()->json([
+        'employees' => $employees,
+        'employeeDetails' => $employeeDetails,
+    ]);
+}
 
     // employee on change due and leave entry details list
     public function employeeLeaveEntryDetails($id)

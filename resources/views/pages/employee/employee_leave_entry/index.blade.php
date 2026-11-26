@@ -357,7 +357,8 @@
                 url: 'leaveEntrySectionWiseEmployeeDetails/' + sectionID,
                 type: "GET",
                 data: {
-                    "_token": "{{ csrf_token() }}"
+                    "_token": "{{ csrf_token() }}",
+                     "year": $('#leave_year').val()
                 },
                 dataType: "json",
                 success: function(response) {
@@ -734,4 +735,9 @@
             $('#jsdataerror').text('Not Found');
         }
     });
+
+
+    $('#leave_year').on('change', function() {
+    $('#changeSection').trigger('change');
+});
 </script>

@@ -188,6 +188,7 @@
                                 <th class="min-w-100px">Line</th>
                                 <th class="min-w-100px">Designation</th>
                                 <th class="min-w-100px">Salary Section</th>
+                                <th class="min-w-50px">Status</th>
                                 <th class="min-w-100px">Actions</th>
                             </tr>
                             <!--end::Table row-->
@@ -318,7 +319,9 @@
                             var showUrl = showRoute.replace('_id_', value.id);
 
                             let d = data[key];
-
+                            let statusBadge = d.status == 1
+                            ? '<span class="badge badge-light-success">Active</span>'
+                            : '<span class="badge badge-light-danger">Deactive</span>';
                             let action = `<td class="text-end">
                                         @can('write employee')
                                             <a href="${editUrl}" class="btn btn-sm btn-success hover-scale p-2" data-bs-toggle="tooltip" data-bs-placement="top" title="Edit">
@@ -332,7 +335,7 @@
                             // console.log(d);                            
                             table.row.add([d.employee_code, d.employee_name, d.type_name, d
                                 .department_name, d.section_name, d.line_name, d
-                                .designation_name, d.salary_section_name, action
+                                .designation_name, d.salary_section_name, statusBadge, action
                             ]).draw();
                         });
                         table.buttons().enable();

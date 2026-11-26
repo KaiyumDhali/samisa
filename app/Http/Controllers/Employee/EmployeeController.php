@@ -110,6 +110,7 @@ class EmployeeController extends Controller {
             e.order,
             e.employee_code,
             e.employee_name,
+            e.status,
             ep.type_id,
             et.type_name,
             ep.department_id,
@@ -141,7 +142,7 @@ class EmployeeController extends Controller {
             AND (ep.salary_section_id = $salarySectionId OR $salarySectionId = '0')
         ";
         $employeesSearch = DB::table(DB::raw("($query) AS subquery"))
-                            ->select('id', 'order', 'employee_code', 'employee_name', 'type_name', 'department_name', 'section_name', 'line_name', 'designation_name', 'salary_section_name')
+                            ->select('id', 'order', 'employee_code', 'employee_name', 'status','type_name', 'department_name', 'section_name', 'line_name', 'designation_name', 'salary_section_name')
                             ->orderBy('employee_code')
                             ->get();
         if ($pdf == "list") {
